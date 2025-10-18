@@ -12,6 +12,8 @@ The Core-UI system consists of five main modules:
 - **Quick Menus** - Simple input and confirmation dialogs
 - **Select Menu** - Advanced selection menu with image previews and pagination
 
+### HELIX World ID: `core-ui-world.lix`
+
 ## Context Menu System
 
 The Context Menu provides a flexible menu interface with support for multiple input types including buttons, checkboxes, text inputs, sliders, color pickers, and more.
