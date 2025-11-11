@@ -1,42 +1,33 @@
 Notification = {}
 Notification.__index = Notification
-Notification.UI = nil
+Notification.UI = WebUI("NotificationUI", "core-ui/Client/ui/notification/index.html")
 Notification.UIReady = false
 Notification.isVisible = false
 Notification.activeNotifications = {}
 Notification.notificationId = 0
 
-function Notification.Init()
-    if Notification.UI then return end
+Notification.UI:RegisterEventHandler("Ready", function()
+    Notification.UIReady = true
+end)
 
-    local uiPath = "core-ui/Client/ui/notification/index.html"
-    Notification.UI = WebUI("NotificationUI", uiPath, 1)
-
-    Notification.UI:RegisterEventHandler("Ready", function()
-        Notification.UIReady = true
-    end)
-
-    Notification.UI:RegisterEventHandler("NotificationClosed", function(id)
-        Notification.activeNotifications[id] = nil
+Notification.UI:RegisterEventHandler("NotificationClosed", function(data)
+    if data and data.id then
+        Notification.activeNotifications[data.id] = nil
         Notification.CheckVisibility()
-    end)
+    end
+end)
 
-    Notification.UI:RegisterEventHandler("AllNotificationsClosed", function()
-        Notification.Hide()
-    end)
-end
+Notification.UI:RegisterEventHandler("AllNotificationsClosed", function()
+    Notification.Hide()
+end)
 
 function Notification.Show()
-    if not Notification.UI or Notification.isVisible then return end
-
-    Notification.UI:SetLayer(3)
+    if Notification.isVisible then return end
     Notification.isVisible = true
 end
 
 function Notification.Hide()
-    if not Notification.UI or not Notification.isVisible then return end
-
-    Notification.UI:SetLayer(1)
+    if not Notification.isVisible then return end
     Notification.isVisible = false
 end
 
@@ -57,10 +48,6 @@ function Notification.CheckVisibility()
 end
 
 function Notification.Send(type, title, message, duration)
-    if not Notification.UI then
-        Notification.Init()
-    end
-
     if not Notification.UIReady then
         Timer.SetTimeout(function()
             Notification.Send(type, title, message, duration)
@@ -76,7 +63,13 @@ function Notification.Send(type, title, message, duration)
     Notification.notificationId = Notification.notificationId + 1
     local id = "notif_" .. Notification.notificationId
 
-    Notification.UI:CallFunction("addNotification", id, type, title, message, duration)
+    Notification.UI:SendEvent("AddNotification", {
+        id = id,
+        type = type,
+        title = title,
+        message = message,
+        duration = duration
+    })
     Notification.activeNotifications[id] = true
     Notification.Show()
 
@@ -93,7 +86,7 @@ function Notification.Remove(id)
     end
 
     if Notification.UI then
-        Notification.UI:CallFunction("removeNotification", id)
+        Notification.UI:SendEvent("RemoveNotification", { id = id })
     end
 
     Notification.activeNotifications[id] = nil
@@ -102,7 +95,7 @@ end
 
 function Notification.Clear()
     if Notification.UI then
-        Notification.UI:CallFunction("clearAll")
+        Notification.UI:SendEvent("ClearAll")
     end
     Notification.activeNotifications = {}
     Notification.Hide()

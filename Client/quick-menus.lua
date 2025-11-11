@@ -3,57 +3,46 @@
 
 QuickMenus = {}
 QuickMenus.__index = QuickMenus
-QuickMenus.UI = nil
+QuickMenus.UI = WebUI("QuickMenusUI", "core-ui/Client/ui/quick-menus/index.html")
 QuickMenus.UIReady = false
 QuickMenus.isVisible = false
 QuickMenus.current = nil
 QuickMenus.pendingCalls = {}
 
-function QuickMenus.Init()
-    if QuickMenus.UI then return end
-
-    local uiPath = "core-ui/Client/ui/quick-menus/index.html"
-    QuickMenus.UI = WebUI("QuickMenusUI", uiPath, 1)
-
-    if QuickMenus.UI then
-        QuickMenus.UI:RegisterEventHandler("OnInputConfirmed", function(data)
-            if data and data.value then
-                QuickMenus.OnInputConfirmed(data.value)
-            end
-        end)
-
-        QuickMenus.UI:RegisterEventHandler("OnInputCanceled", function(data)
-            QuickMenus.OnInputCanceled()
-        end)
-
-        QuickMenus.UI:RegisterEventHandler("OnConfirmYes", function(data)
-            QuickMenus.OnConfirmYes()
-        end)
-
-        QuickMenus.UI:RegisterEventHandler("OnConfirmNo", function(data)
-            QuickMenus.OnConfirmNo()
-        end)
-
-        QuickMenus.UI:RegisterEventHandler("Ready", function()
-            QuickMenus.UIReady = true
-
-            for _, call in ipairs(QuickMenus.pendingCalls) do
-                QuickMenus.UI:CallFunction(call.func, table.unpack(call.args))
-            end
-            QuickMenus.pendingCalls = {}
-        end)
+QuickMenus.UI:RegisterEventHandler("OnInputConfirmed", function(data)
+    if data and data.value then
+        QuickMenus.OnInputConfirmed(data.value)
     end
-end
+end)
+
+QuickMenus.UI:RegisterEventHandler("OnInputCanceled", function(data)
+    QuickMenus.OnInputCanceled()
+end)
+
+QuickMenus.UI:RegisterEventHandler("OnConfirmYes", function(data)
+    QuickMenus.OnConfirmYes()
+end)
+
+QuickMenus.UI:RegisterEventHandler("OnConfirmNo", function(data)
+    QuickMenus.OnConfirmNo()
+end)
+
+QuickMenus.UI:RegisterEventHandler("Ready", function()
+    QuickMenus.UIReady = true
+
+    for _, call in ipairs(QuickMenus.pendingCalls) do
+        QuickMenus.UI:SendEvent(call.event, call.data)
+    end
+    QuickMenus.pendingCalls = {}
+end)
 
 function QuickMenus.Show()
-    if not QuickMenus.UI or QuickMenus.isVisible then return end
-    QuickMenus.UI:SetLayer(5)
+    if QuickMenus.isVisible then return end
     QuickMenus.isVisible = true
 end
 
 function QuickMenus.Hide()
-    if not QuickMenus.UI or not QuickMenus.isVisible then return end
-    QuickMenus.UI:SetLayer(1)
+    if not QuickMenus.isVisible then return end
     QuickMenus.isVisible = false
 end
 
@@ -61,27 +50,23 @@ function QuickMenus.new()
     local self = setmetatable({}, QuickMenus)
     QuickMenus.current = self
 
-    -- Initialize UI if not already done
-    if not QuickMenus.UI then
-        QuickMenus.Init()
-    end
-
     return self
 end
 
 function QuickMenus._ShowInputImmediate(title, placeholder)
     if QuickMenus.UIReady then
-        QuickMenus.UI:CallFunction("showInputMenu", title, placeholder or "")
+        QuickMenus.UI:SendEvent("ShowInputMenu", { title = title, placeholder = placeholder or "" })
+        QuickMenus.UI:SetInputMode(1)
+        QuickMenus.UI:BringToFront()
         QuickMenus.Show()
     else
         table.insert(QuickMenus.pendingCalls, {
-            func = "showInputMenu",
-            args = {title, placeholder or ""}
+            event = "ShowInputMenu",
+            data = { title = title, placeholder = placeholder or "" }
         })
     end
 end
 
--- Show an input menu
 function QuickMenus:ShowInput(title, placeholder, callback, callback_cancel)
     self.input_callback = callback
     self.input_cancel_callback = callback_cancel
@@ -91,17 +76,18 @@ end
 
 function QuickMenus._ShowConfirmImmediate(title, message)
     if QuickMenus.UIReady then
-        QuickMenus.UI:CallFunction("showConfirmMenu", title, message)
+        QuickMenus.UI:SendEvent("ShowConfirmMenu", { title = title, message = message })
+        QuickMenus.UI:SetInputMode(1)
+        QuickMenus.UI:BringToFront()
         QuickMenus.Show()
     else
         table.insert(QuickMenus.pendingCalls, {
-            func = "showConfirmMenu",
-            args = {title, message}
+            event = "ShowConfirmMenu",
+            data = { title = title, message = message }
         })
     end
 end
 
--- Show a confirmation menu
 function QuickMenus:ShowConfirm(title, message, callback_yes, callback_no)
     self.confirm_yes_callback = callback_yes
     self.confirm_no_callback = callback_no
@@ -111,14 +97,16 @@ end
 
 function QuickMenus:CloseInput()
     if QuickMenus.UI then
-        QuickMenus.UI:CallFunction("hideInputMenu")
+        QuickMenus.UI:SetInputMode(0)
+        QuickMenus.UI:SendEvent("HideInputMenu")
         QuickMenus.Hide()
     end
 end
 
 function QuickMenus:CloseConfirm()
     if QuickMenus.UI then
-        QuickMenus.UI:CallFunction("hideConfirmMenu")
+        QuickMenus.UI:SetInputMode(0)
+        QuickMenus.UI:SendEvent("HideConfirmMenu")
         QuickMenus.Hide()
     end
 end

@@ -1,55 +1,63 @@
-// Functions called from Lua to show/hide menus
-function showInputMenu(title, placeholder) {
-    $('.input-menu .header .title').text(title);
-    $('.input-menu input').attr('placeholder', placeholder);
-    $('.input-menu input').val(''); // Clear previous value
-    $('body').addClass('in-input-menu');
-    console.log("Input menu shown with title:", title, "and placeholder:", placeholder);
-    // Focus the input with multiple attempts to ensure it works
-    const focusInput = () => {
-        const input = $('.input-menu input');
-        input.focus();
-        input.get(0)?.focus(); // Also try native focus
-    };
+window.addEventListener('message', (event) => {
+    const eventData = event.data;
+    const eventAction = eventData.name || eventData.action;
 
-    // Try immediately
-    focusInput();
+    if (eventAction === 'ShowInputMenu') {
+        const data = eventData.args && eventData.args[0];
+        if (data) {
+            $('.input-menu .header .title').text(data.title);
+            $('.input-menu input').attr('placeholder', data.placeholder);
+            $('.input-menu input').val('');
+            $('body').addClass('in-input-menu');
 
-    // Try again after short delays to ensure DOM is ready and visible
-    setTimeout(focusInput, 50);
-    setTimeout(focusInput, 150);
-}
+            const focusInput = () => {
+                const input = $('.input-menu input');
+                input.focus();
+                input.get(0)?.focus();
+            };
 
-function hideInputMenu() {
-    $('.input-menu input').val('');
-    $('body').removeClass('in-input-menu');
-}
-
-function showConfirmMenu(title, message) {
-    $('.confirm-menu .header .title').text(title);
-    $('.confirm-menu .message').text(message);
-    $('body').addClass('in-confirm-menu');
-}
-
-function hideConfirmMenu() {
-    $('body').removeClass('in-confirm-menu');
-}
+            focusInput();
+            setTimeout(focusInput, 50);
+            setTimeout(focusInput, 150);
+        }
+    } else if (eventAction === 'HideInputMenu') {
+        $('.input-menu input').val('');
+        $('body').removeClass('in-input-menu');
+    } else if (eventAction === 'ShowConfirmMenu') {
+        const data = eventData.args && eventData.args[0];
+        if (data) {
+            $('.confirm-menu .header .title').text(data.title);
+            $('.confirm-menu .message').text(data.message);
+            $('body').addClass('in-confirm-menu');
+        }
+    } else if (eventAction === 'HideConfirmMenu') {
+        $('body').removeClass('in-confirm-menu');
+    }
+});
 
 function sendInputValue(value) {
     const safeValue = value || "";
-    ue.interface.broadcast('OnInputConfirmed', JSON.stringify({ value: safeValue }));
+    if (typeof hEvent === 'function') {
+        hEvent('OnInputConfirmed', { value: safeValue });
+    }
 }
 
 function sendInputCancel() {
-    ue.interface.broadcast('OnInputCanceled', JSON.stringify({}));
+    if (typeof hEvent === 'function') {
+        hEvent('OnInputCanceled', {});
+    }
 }
 
 function sendConfirmYes() {
-    ue.interface.broadcast('OnConfirmYes', JSON.stringify({}));
+    if (typeof hEvent === 'function') {
+        hEvent('OnConfirmYes', {});
+    }
 }
 
 function sendConfirmNo() {
-    ue.interface.broadcast('OnConfirmNo', JSON.stringify({}));
+    if (typeof hEvent === 'function') {
+        hEvent('OnConfirmNo', {});
+    }
 }
 
 // Input menu events
@@ -105,7 +113,7 @@ $(document).on('keydown', function (e) {
 });
 
 setTimeout(function() {
-    if (typeof ue !== 'undefined' && ue.interface && ue.interface.broadcast) {
-        ue.interface.broadcast('Ready', {});
+    if (typeof hEvent === 'function') {
+        hEvent('Ready', {});
     }
 }, 100);

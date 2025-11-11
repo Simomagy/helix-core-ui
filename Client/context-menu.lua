@@ -1,47 +1,34 @@
--- ContextMenu Class
-
 local ContextMenu = {}
 ContextMenu.__index = ContextMenu
 ContextMenu.currentInstance = nil
 ContextMenu.focusIndex = 1
-ContextMenu.UI = nil
+ContextMenu.UI = WebUI("ContextMenu", "core-ui/Client/ui/context-menu/index.html")
 ContextMenu.UIReady = false
 ContextMenu.isVisible = false
 
-function ContextMenu.Init()
-    if ContextMenu.UI then return end
-
-    local uiPath = "core-ui/Client/ui/context-menu/index.html"
-    ContextMenu.UI = WebUI("ContextMenu", uiPath, 1)
-
-    if ContextMenu.UI then
-        ContextMenu.UI:RegisterEventHandler('ExecuteCallback', function(data)
-            if data and data.id and ContextMenu.currentInstance then
-                ContextMenu.currentInstance:executeCallback(data.id, data.params)
-            end
-        end)
-
-        ContextMenu.UI:RegisterEventHandler('CloseMenu', function(data)
-            if ContextMenu.currentInstance then
-                ContextMenu.currentInstance:Close()
-            end
-        end)
-
-        ContextMenu.UI:RegisterEventHandler('Ready', function()
-            ContextMenu.UIReady = true
-        end)
+ContextMenu.UI:RegisterEventHandler('ExecuteCallback', function(data)
+    if data and data.id and ContextMenu.currentInstance then
+        ContextMenu.currentInstance:executeCallback(data.id, data.params)
     end
-end
+end)
+
+ContextMenu.UI:RegisterEventHandler('CloseMenu', function(data)
+    if ContextMenu.currentInstance then
+        ContextMenu.currentInstance:Close()
+    end
+end)
+
+ContextMenu.UI:RegisterEventHandler('Ready', function()
+    ContextMenu.UIReady = true
+end)
 
 function ContextMenu.Show()
-    if not ContextMenu.UI or ContextMenu.isVisible then return end
-    ContextMenu.UI:SetLayer(5)
+    if ContextMenu.isVisible then return end
     ContextMenu.isVisible = true
 end
 
 function ContextMenu.Hide()
-    if not ContextMenu.UI or not ContextMenu.isVisible then return end
-    ContextMenu.UI:SetLayer(1)
+    if not ContextMenu.isVisible then return end
     ContextMenu.isVisible = false
 end
 
@@ -49,10 +36,6 @@ function ContextMenu.new()
     local self = setmetatable({}, ContextMenu)
     self.items = {}
     ContextMenu.currentInstance = self
-
-    if not ContextMenu.UI then
-        ContextMenu.Init()
-    end
 
     return self
 end
@@ -226,7 +209,7 @@ end
 
 function ContextMenu:SendNotification(title, text, time, position, color)
     if ContextMenu.UI then
-        ContextMenu.UI:CallFunction("ShowNotification", {
+        ContextMenu.UI:SendEvent("ShowNotification", {
             title = title,
             message = text,
             duration = time,
@@ -250,73 +233,24 @@ function ContextMenu:Open(disable_game_input, enable_mouse)
     if ContextMenu.UI then
         local items = self:getItems()
 
-        ContextMenu.UI:CallFunction("clearMenuItems", nil)
+        ContextMenu.UI:SendEvent("ClearMenuItems")
 
         for i, item in ipairs(items) do
-            if item.type == "button" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.text or "", "", "", "", "", "")
-            elseif item.type == "checkbox" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", "", "", "",
-                    tostring(item.checked), "")
-            elseif item.type == "range" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", tostring(item.value),
-                    tostring(item.min), tostring(item.max), "", "")
-            elseif item.type == "text-input" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", "", "", "", "", "")
-            elseif item.type == "password" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", "", "", "", "",
-                    item.placeholder or "")
-            elseif item.type == "number" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", tostring(item.value), "", "",
-                    "", "")
-            elseif item.type == "color" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", item.value or "#ffffff", "", "",
-                    "", "")
-            elseif item.type == "date" then
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, item.label or "", item.value or "2024-01-01", "",
-                    "", "", "")
-            elseif item.type == "text-display" then
-                local dataStr = item.data
-                if type(item.data) == "table" then
-                    dataStr = table.concat(item.data, ", ")
-                end
-                ContextMenu.UI:CallFunction("addMenuItem", item.id, item.type, dataStr or "", "", "", "", "", "")
-            elseif item.type == "dropdown" then
-                ContextMenu.UI:CallFunction("addDropdownItem", item.id, item.label or "")
-                if item.options then
-                    for _, opt in ipairs(item.options) do
-                        ContextMenu.UI:CallFunction("addDropdownOption", opt.id, opt.type or "button",
-                            opt.text or opt.label or "")
-                    end
-                end
-            elseif item.type == "radio" then
-                ContextMenu.UI:CallFunction("addRadioItem", item.id, item.label or "")
-                if item.options then
-                    for _, opt in ipairs(item.options) do
-                        ContextMenu.UI:CallFunction("addRadioOption", opt.value, opt.text or "", tostring(opt.checked))
-                    end
-                end
-            elseif item.type == "select" then
-                ContextMenu.UI:CallFunction("addSelectItem", item.id, item.label or "")
-                if item.options then
-                    for _, opt in ipairs(item.options) do
-                        ContextMenu.UI:CallFunction("addSelectOption", opt.value, opt.text or "", tostring(opt.selected))
-                    end
-                end
-            end
+            ContextMenu.UI:SendEvent("AddMenuItem", item)
         end
 
-        ContextMenu.UI:CallFunction("buildMenuFromPending", nil)
+        ContextMenu.UI:SendEvent("BuildMenu")
 
         if self.Header then
-            ContextMenu.UI:CallFunction("setHeader", self.Header)
+            ContextMenu.UI:SendEvent("SetHeader", { header = self.Header })
         end
 
         if self.MenuTitle or self.MenuDescription then
-            ContextMenu.UI:CallFunction("setMenuInfo", self.MenuTitle or "", self.MenuDescription or "")
+            ContextMenu.UI:SendEvent("SetMenuInfo", { title = self.MenuTitle or "", description = self.MenuDescription or "" })
         end
 
-        ContextMenu.UI:CallFunction("ForceFocusOnUI", {})
+        ContextMenu.UI:SetInputMode(1)
+        ContextMenu.UI:BringToFront()
         ContextMenu.Show()
     end
 end
@@ -326,14 +260,14 @@ function ContextMenu:setMenuInfo(title, description)
     self.MenuDescription = description
 
     if ContextMenu.UI then
-        ContextMenu.UI:CallFunction("setMenuInfo", title or "", description or "")
+        ContextMenu.UI:SendEvent("SetMenuInfo", { title = title or "", description = description or "" })
     end
 end
 
 function ContextMenu:SetHeader(title)
     self.Header = title
     if ContextMenu.UI then
-        ContextMenu.UI:CallFunction("setHeader", title)
+        ContextMenu.UI:SendEvent("SetHeader", { header = title })
     end
 end
 
@@ -390,12 +324,12 @@ end
 
 function ContextMenu:focusItem(item)
     if not item or not ContextMenu.UI then return end
-    ContextMenu.UI:CallFunction("FocusOptionById", item.id)
+    ContextMenu.UI:SendEvent("FocusOptionById", { id = item.id })
 end
 
 function ContextMenu:refreshMenu()
     if ContextMenu.UI then
-        ContextMenu.UI:CallFunction("buildContextMenu", self.items)
+        ContextMenu.UI:SendEvent("BuildContextMenu", { items = self.items })
         local flattened = self:getFlattenedItems()
         if self.focusIndex > #flattened then
             self.focusIndex = #flattened
@@ -417,7 +351,8 @@ end
 function ContextMenu:Close()
     self.isOpen = false
     if ContextMenu.UI then
-        ContextMenu.UI:CallFunction("closeContextMenu")
+        ContextMenu.UI:SetInputMode(0)
+        ContextMenu.UI:SendEvent("CloseContextMenu")
         ContextMenu.Hide()
     end
 end
@@ -561,12 +496,12 @@ function ContextMenu:enterOrEdit()
             self:refreshMenu()
         else
             if ContextMenu.UI then
-                ContextMenu.UI:CallFunction("SelectFocusedOption", {})
+                ContextMenu.UI:SendEvent("SelectFocusedOption")
             end
         end
     else
         if ContextMenu.UI then
-            ContextMenu.UI:CallFunction("SelectFocusedOption", {})
+            ContextMenu.UI:SendEvent("SelectFocusedOption")
         end
     end
 end

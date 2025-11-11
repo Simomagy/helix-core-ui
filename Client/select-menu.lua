@@ -3,63 +3,48 @@
 
 SelectMenu = {}
 SelectMenu.__index = SelectMenu
-SelectMenu.UI = nil
+SelectMenu.UI = WebUI("SelectMenuUI", "core-ui/Client/ui/select-menu/index.html")
 SelectMenu.UIReady = false
 SelectMenu.isVisible = false
 SelectMenu.currentInstance = nil
 SelectMenu.pendingOpen = nil
 
-function SelectMenu.Init()
-    if SelectMenu.UI then return end
-    local uiPath = "core-ui/Client/ui/select-menu/index.html"
-    SelectMenu.UI = WebUI("SelectMenuUI", uiPath, 1)
-
-    if SelectMenu.UI then
-        SelectMenu.UI:RegisterEventHandler("OnOptionSelected", function(data)
-            if data and data.optionId then
-                SelectMenu.OnOptionSelected(data.optionId)
-            end
-        end)
-
-        SelectMenu.UI:RegisterEventHandler("OnBackspace", function(data)
-            SelectMenu.OnBackspace()
-        end)
-
-        SelectMenu.UI:RegisterEventHandler("Ready", function()
-            SelectMenu.UIReady = true
-
-            if SelectMenu.pendingOpen then
-                SelectMenu._OpenImmediate(SelectMenu.pendingOpen.options,
-                    SelectMenu.pendingOpen.title,
-                    SelectMenu.pendingOpen.playersCount)
-                SelectMenu.pendingOpen = nil
-            end
-        end)
+SelectMenu.UI:RegisterEventHandler("OnOptionSelected", function(data)
+    if data and data.optionId then
+        SelectMenu.OnOptionSelected(data.optionId)
     end
-end
+end)
+
+SelectMenu.UI:RegisterEventHandler("OnBackspace", function(data)
+    SelectMenu.OnBackspace()
+end)
+
+SelectMenu.UI:RegisterEventHandler("Ready", function()
+    SelectMenu.UIReady = true
+
+    if SelectMenu.pendingOpen then
+        SelectMenu._OpenImmediate(SelectMenu.pendingOpen.options,
+            SelectMenu.pendingOpen.title,
+            SelectMenu.pendingOpen.playersCount)
+        SelectMenu.pendingOpen = nil
+    end
+end)
 
 function SelectMenu.Show()
-    if not SelectMenu.UI or SelectMenu.isVisible then return end
-    SelectMenu.UI:SetLayer(5)
+    if SelectMenu.isVisible then return end
     SelectMenu.isVisible = true
 end
 
 function SelectMenu.Hide()
-    if not SelectMenu.UI or not SelectMenu.isVisible then return end
-    SelectMenu.UI:SetLayer(1)
+    if not SelectMenu.isVisible then return end
     SelectMenu.isVisible = false
 end
 
 function SelectMenu.new()
     local self = setmetatable({}, SelectMenu)
-    self.options = {} -- Stores the menu options
+    self.options = {}
     self.title = "Select Option"
     SelectMenu.currentInstance = self
-
-    -- Initialize UI if not already done
-    if not SelectMenu.UI then
-        SelectMenu.Init()
-    end
 
     return self
 end
@@ -84,39 +69,25 @@ end
 function SelectMenu._SendOptionsToUI(options)
     if not SelectMenu.UI or not SelectMenu.UIReady then return end
 
-    SelectMenu.UI:CallFunction("clearOptions")
+    SelectMenu.UI:SendEvent("ClearOptions")
 
     for i, option in ipairs(options) do
-        SelectMenu.UI:CallFunction("addOption",
-            option.id,
-            option.name,
-            option.image,
-            option.description
-        )
-
-        if option.info then
-            for j, infoItem in ipairs(option.info) do
-                SelectMenu.UI:CallFunction("addOptionInfo",
-                    option.id,
-                    infoItem.name or "",
-                    infoItem.value or "",
-                    infoItem.icon or ""
-                )
-            end
-        end
+        SelectMenu.UI:SendEvent("AddOption", option)
     end
 
-    SelectMenu.UI:CallFunction("buildMenu")
+    SelectMenu.UI:SendEvent("BuildMenu")
 end
 
 function SelectMenu._OpenImmediate(options, title, playersCount)
     if SelectMenu.UI then
-        SelectMenu.UI:CallFunction("setMenuTitle", title)
-        SelectMenu.UI:CallFunction("setPlayersCount", tostring(playersCount))
+        SelectMenu.UI:SendEvent("SetMenuTitle", { title = title })
+        SelectMenu.UI:SendEvent("SetPlayersCount", { count = tostring(playersCount) })
 
         SelectMenu._SendOptionsToUI(options)
 
-        SelectMenu.UI:CallFunction("showMenu")
+        SelectMenu.UI:SetInputMode(1)
+        SelectMenu.UI:BringToFront()
+        SelectMenu.UI:SendEvent("ShowMenu")
         SelectMenu.Show()
     end
 end
@@ -142,7 +113,8 @@ end
 
 function SelectMenu:Close()
     if SelectMenu.UI then
-        SelectMenu.UI:CallFunction("hideMenu")
+        SelectMenu.UI:SetInputMode(0)
+        SelectMenu.UI:SendEvent("HideMenu")
         SelectMenu.Hide()
     end
 end

@@ -4,44 +4,38 @@
 Interaction = {}
 Interaction.__index = Interaction
 Interaction.instances = {}
-Interaction.UI = nil
-Interaction.inputDispatcher = nil
+Interaction.UI = WebUI("InteractionUI", "core-ui/Client/ui/interaction/index.html")
 Interaction.UIReady = false
 Interaction.isVisible = false
+Interaction.boundKeys = {}
 
-function Interaction.Init()
-    if Interaction.UI then return end
+Interaction.UI:RegisterEventHandler("Ready", function()
+    Interaction.UIReady = true
 
-    local uiPath = "core-ui/Client/ui/interaction/index.html"
-    Interaction.UI = WebUI("InteractionUI", uiPath, 1)
-
-    Interaction.UI:RegisterEventHandler("Ready", function()
-        Interaction.UIReady = true
-
-        for id, interaction in pairs(Interaction.instances) do
-            if interaction.active and not interaction.sent then
-                Interaction.UI:CallFunction("addInteraction", id, interaction.text, interaction.key, interaction.duration)
-                interaction.sent = true
-            end
+    for id, interaction in pairs(Interaction.instances) do
+        if interaction.active and not interaction.sent then
+            Interaction.UI:SendEvent("AddInteraction", {
+                id = id,
+                text = interaction.text,
+                key = interaction.key,
+                duration = interaction.duration
+            })
+            interaction.sent = true
         end
-    end)
+    end
+end)
 
-    Interaction.UI:RegisterEventHandler("AllInteractionsClosed", function()
-        Interaction.Hide()
-    end)
-
-    Interaction.InitializeInputDispatcher()
-end
+Interaction.UI:RegisterEventHandler("AllInteractionsClosed", function()
+    Interaction.Hide()
+end)
 
 function Interaction.Show()
-    if not Interaction.UI or Interaction.isVisible then return end
-    Interaction.UI:SetLayer(3)
+    if Interaction.isVisible then return end
     Interaction.isVisible = true
 end
 
 function Interaction.Hide()
-    if not Interaction.UI or not Interaction.isVisible then return end
-    Interaction.UI:SetLayer(1)
+    if not Interaction.isVisible then return end
     Interaction.isVisible = false
 end
 
@@ -61,59 +55,43 @@ function Interaction.CheckVisibility()
     end
 end
 
-function Interaction.InitializeInputDispatcher()
-    local inputDispatchActorClass = UE.UClass.Load('/HelixCommonUI/VAULT/Blueprints/BP_InputDispatchActor.BP_InputDispatchActor_C')
+function Interaction.BindKey(key)
+    if Interaction.boundKeys[key] then return end
 
-    if inputDispatchActorClass then
-        Interaction.inputDispatcher = UE.UGameplayStatics.GetActorOfClass(HWorld, inputDispatchActorClass)
-    end
-
-    if Interaction.inputDispatcher and Interaction.inputDispatcher.OnKeyPressed then
-        Interaction.inputDispatcher.OnKeyPressed:Add(Interaction.inputDispatcher, function(_, key)
-            if not key then return end
-            Interaction.OnKeyPressed(key)
-        end)
-    end
-
-    if Interaction.inputDispatcher and Interaction.inputDispatcher.OnKeyReleased then
-        Interaction.inputDispatcher.OnKeyReleased:Add(Interaction.inputDispatcher, function(_, key)
-            if not key then return end
-            Interaction.OnKeyReleased(key)
-        end)
-    end
-end
-
-function Interaction.OnKeyPressed(key)
-    for id, interaction in pairs(Interaction.instances) do
-        if interaction.active and key.KeyName == interaction.key then
-            if not interaction.pressing then
-                interaction.pressing = true
-                interaction.startTime = os.clock()
-                Interaction.UI:CallFunction("startProgress", id)
-                Interaction.StartProgressTracking(id)
+    Input.BindKey(key, function()
+        for id, interaction in pairs(Interaction.instances) do
+            if interaction.active and interaction.key == key then
+                if not interaction.pressing then
+                    interaction.pressing = true
+                    interaction.startTime = os.clock()
+                    Interaction.UI:SendEvent("StartProgress", { id = id })
+                    Interaction.StartProgressTracking(id)
+                end
             end
         end
-    end
-end
+    end, 'Pressed')
 
-function Interaction.OnKeyReleased(key)
-    for id, interaction in pairs(Interaction.instances) do
-        if interaction.active and key.KeyName == interaction.key and interaction.pressing then
-            local elapsed = (os.clock() - interaction.startTime) * 1000
-            local progress = (elapsed / interaction.duration) * 100
+    Input.BindKey(key, function()
+        for id, interaction in pairs(Interaction.instances) do
+            if interaction.active and interaction.key == key and interaction.pressing then
+                local elapsed = (os.clock() - interaction.startTime) * 1000
+                local progress = (elapsed / interaction.duration) * 100
 
-            interaction.pressing = false
-            interaction.completed = false
+                interaction.pressing = false
+                interaction.completed = false
 
-            if progress >= 100 then
-                Interaction.OnComplete(id)
-            elseif progress > 10 then
-                Interaction.OnCancel(id)
+                if progress >= 100 then
+                    Interaction.OnComplete(id)
+                elseif progress > 10 then
+                    Interaction.OnCancel(id)
+                end
+
+                Interaction.UI:SendEvent("ResetProgress", { id = id })
             end
-
-            Interaction.UI:CallFunction("resetProgress", id)
         end
-    end
+    end, 'Released')
+
+    Interaction.boundKeys[key] = true
 end
 
 function Interaction.StartProgressTracking(id)
@@ -125,7 +103,7 @@ function Interaction.StartProgressTracking(id)
             local elapsed = (os.clock() - interaction.startTime) * 1000
             local progress = math.min((elapsed / interaction.duration) * 100, 100)
 
-            Interaction.UI:CallFunction("updateProgressFromLua", id, progress)
+            Interaction.UI:SendEvent("UpdateProgress", { id = id, progress = progress })
 
             if progress >= 100 and not interaction.completed then
                 interaction.completed = true
@@ -141,12 +119,6 @@ end
 
 -- Create a new interaction
 function Interaction.Create(id, config)
-    -- Initialize UI if not already done
-    if not Interaction.UI then
-        Interaction.Init()
-    end
-
-    -- Default configuration
     config = config or {}
     local interaction = {
         id = id,
@@ -162,21 +134,24 @@ function Interaction.Create(id, config)
         sent = false
     }
 
-    -- Store the interaction
     Interaction.instances[id] = interaction
 
-    -- Send to UI if ready, otherwise it will be sent when UI is ready
+    Interaction.BindKey(interaction.key)
+
     if Interaction.UIReady then
         if Interaction.UI and interaction.active and not interaction.sent then
-            Interaction.UI:CallFunction("addInteraction", id, interaction.text, interaction.key, interaction
-                .duration)
+            Interaction.UI:SendEvent("AddInteraction", {
+                id = id,
+                text = interaction.text,
+                key = interaction.key,
+                duration = interaction.duration
+            })
             interaction.sent = true
         end
     end
 
     Interaction.Show()
 
-    -- print("[Interaction] Created:", id, "-", interaction.text)
     return interaction
 end
 
@@ -187,18 +162,13 @@ function Interaction.Remove(id)
 
     interaction.active = false
 
-    -- Remove from UI
     if Interaction.UI then
-        Interaction.UI:CallFunction("removeInteraction", id)
+        Interaction.UI:SendEvent("RemoveInteraction", { id = id })
     end
 
-    -- Remove from instances
     Interaction.instances[id] = nil
 
-    -- Check if we should hide
     Interaction.CheckVisibility()
-
-    -- print("[Interaction] Removed:", id)
 end
 
 -- Handle interaction completion

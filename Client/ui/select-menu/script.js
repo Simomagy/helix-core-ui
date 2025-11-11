@@ -22,64 +22,51 @@ const $selectedOptionInfo = {
     infoList: $('.selected-option .info .list'),
 };
 
-// Functions called from Lua
-function clearOptions() {
-    pendingOptions = [];
-    currentOptions = [];
-    actualPage = 0;
-}
+window.addEventListener('message', (event) => {
+    const eventData = event.data;
+    const eventAction = eventData.name || eventData.action;
 
-function addOption(id, name, image, description) {
-    // Find or create option
-    let option = pendingOptions.find(opt => opt.id === id);
-    if (!option) {
-        option = {
-            id: id,
-            name: name,
-            image: image,
-            description: description,
-            info: []
-        };
-        pendingOptions.push(option);
+    if (eventAction === 'ClearOptions') {
+        pendingOptions = [];
+        currentOptions = [];
+        actualPage = 0;
+    } else if (eventAction === 'AddOption') {
+        const data = eventData.args && eventData.args[0];
+        if (data) {
+            let option = pendingOptions.find(opt => opt.id === data.id);
+            if (!option) {
+                option = {
+                    id: data.id,
+                    name: data.name,
+                    image: data.image,
+                    description: data.description,
+                    info: data.info || []
+                };
+                pendingOptions.push(option);
+            }
+        }
+    } else if (eventAction === 'BuildMenu') {
+        currentOptions = pendingOptions;
+        renderOptions();
+        if (currentOptions.length > 0) {
+            setSelectedOptionInfo(currentOptions[0]);
+        }
+    } else if (eventAction === 'SetMenuTitle') {
+        const data = eventData.args && eventData.args[0];
+        if (data && data.title) {
+            $options.header.title.text(data.title);
+        }
+    } else if (eventAction === 'SetPlayersCount') {
+        const data = eventData.args && eventData.args[0];
+        if (data && data.count !== undefined) {
+            $options.header.playersCount.text(data.count);
+        }
+    } else if (eventAction === 'ShowMenu') {
+        $('body').removeClass('hidden');
+    } else if (eventAction === 'HideMenu') {
+        $('body').addClass('hidden');
     }
-}
-
-function addOptionInfo(optionId, infoName, infoValue, infoIcon) {
-    let option = pendingOptions.find(opt => opt.id === optionId);
-    if (option) {
-        option.info.push({
-            name: infoName,
-            value: infoValue,
-            icon: infoIcon
-        });
-    }
-}
-
-function buildMenu() {
-    currentOptions = pendingOptions;
-    renderOptions();
-
-    // Select first option by default
-    if (currentOptions.length > 0) {
-        setSelectedOptionInfo(currentOptions[0]);
-    }
-}
-
-function setMenuTitle(title) {
-    $options.header.title.text(title);
-}
-
-function setPlayersCount(count) {
-    $options.header.playersCount.text(count);
-}
-
-function showMenu() {
-    $('body').removeClass('hidden');
-}
-
-function hideMenu() {
-    $('body').addClass('hidden');
-}
+});
 
 // Internal functions
 function renderOptions() {
@@ -127,7 +114,9 @@ function setSelectedOptionInfo(option) {
 }
 
 function sendOptionSelected(optionId) {
-    ue.interface.broadcast('OnOptionSelected', JSON.stringify({ optionId: optionId }));
+    if (typeof hEvent === 'function') {
+        hEvent('OnOptionSelected', { optionId: optionId });
+    }
 }
 
 // Event handlers
@@ -191,21 +180,21 @@ $('.slider button.slide').click(function (e) {
     }
 });
 
-// Backspace key handler
 $(document).on('keydown', function (e) {
-    if (e.which === 8) { // Backspace
+    if (e.which === 8) {
         e.preventDefault();
         if (!$('body').hasClass('hidden')) {
-            ue.interface.broadcast('OnBackspace', JSON.stringify({}));
+            if (typeof hEvent === 'function') {
+                hEvent('OnBackspace', {});
+            }
         }
     }
 });
-// });
 
 $(document).ready(function () {
     setTimeout(function() {
-        if (typeof ue !== 'undefined' && ue.interface && ue.interface.broadcast) {
-            ue.interface.broadcast('Ready', {});
+        if (typeof hEvent === 'function') {
+            hEvent('Ready', {});
         }
     }, 100);
 });

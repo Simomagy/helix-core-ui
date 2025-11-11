@@ -198,213 +198,36 @@ function handleEditMode(e) {
     }
 }
 
-// Function to close the menu - sends event to Lua
 function closeMenu() {
-    // Communicate with Lua using new format
-    ue.interface.broadcast('CloseMenu', JSON.stringify({}));
+    if (typeof hEvent === 'function') {
+        hEvent('CloseMenu', {});
+    }
 }
 
-// Function to execute callback - sends event to Lua  
 function executeCallback(id, params) {
-    // Communicate with Lua using new format
-    ue.interface.broadcast('ExecuteCallback', JSON.stringify({ id: id, params: params }));
+    if (typeof hEvent === 'function') {
+        hEvent('ExecuteCallback', { id: id, params: params });
+    }
 }
 
 
-
-function luaLog(message) {
-    // Disabled due to HELIX JSON parsing bugs
-}
 
 let pendingMenuItems = [];
 
-// Clear all pending items
-function clearMenuItems() {
-    pendingMenuItems = [];
-}
-
-// Add a single item (receives strings to avoid JSON parsing)
-function addMenuItem(id, type, label, value, min, max, checked, placeholder) {
-    const item = {
-        id: id,
-        type: type
-    };
-
-    // Add properties based on type
-    switch (type) {
-        case 'button':
-            item.text = label;
-            break;
-        case 'checkbox':
-            item.label = label;
-            item.checked = (checked === 'true' || checked === true);
-            break;
-        case 'range':
-            item.label = label;
-            item.min = parseInt(min) || 0;
-            item.max = parseInt(max) || 100;
-            item.value = parseInt(value) || 50;
-            break;
-        case 'text-input':
-        case 'password':
-            item.label = label;
-            if (placeholder) item.placeholder = placeholder;
-            break;
-        case 'number':
-            item.label = label;
-            item.value = parseInt(value) || 0;
-            break;
-        case 'color':
-            item.label = label;
-            item.value = value || '#ffffff';
-            break;
-        case 'date':
-            item.label = label;
-            item.value = value || '2024-01-01';
-            break;
-        case 'text-display':
-            item.data = label;
-            break;
-        default:
-            item.label = label || '';
-    }
-
-    pendingMenuItems.push(item);
-}
-
-// Add dropdown item (special case with sub-items)
-function addDropdownItem(id, label) {
-    pendingMenuItems.push({
-        id: id,
-        type: 'dropdown',
-        label: label,
-        options: []
-    });
-}
-
-// Add sub-item to last dropdown
-function addDropdownOption(id, type, text) {
-    const lastDropdown = pendingMenuItems.filter(item => item.type === 'dropdown').pop();
-    if (lastDropdown) {
-        lastDropdown.options.push({
-            id: id,
-            type: type || 'button',
-            text: text
-        });
-    }
-}
-
-// Add radio item
-function addRadioItem(id, label) {
-    pendingMenuItems.push({
-        id: id,
-        type: 'radio',
-        label: label,
-        options: []
-    });
-}
-
-// Add radio option to last radio group
-function addRadioOption(value, text, checked) {
-    const lastRadio = pendingMenuItems.filter(item => item.type === 'radio').pop();
-    if (lastRadio) {
-        lastRadio.options.push({
-            value: value,
-            text: text,
-            checked: (checked === 'true' || checked === true)
-        });
-    }
-}
-
-// Add select item
-function addSelectItem(id, label) {
-    pendingMenuItems.push({
-        id: id,
-        type: 'select',
-        label: label,
-        options: []
-    });
-}
-
-// Add option to last select
-function addSelectOption(value, text, selected) {
-    const lastSelect = pendingMenuItems.filter(item => item.type === 'select').pop();
-    if (lastSelect) {
-        lastSelect.options.push({
-            value: value,
-            text: text,
-            selected: (selected === 'true' || selected === true)
-        });
-    }
-}
-
-// Build the menu with all pending items
-function buildMenuFromPending() {
-    buildContextMenu(pendingMenuItems);
-}
-
-
-// Function called from Lua to build the context menu
 function buildContextMenu(items) {
-    // Skip JS->Lua logging since it's broken in HELIX
-    // Just focus on the main functionality
-
-    // Try to parse if it's a string
     if (typeof items === 'string') {
         try {
             items = JSON.parse(items);
         } catch (e) {
-            // Failed to parse, use as-is
         }
     }
 
-    // Clear container first
     $('#context-menu-container').empty();
 
-    // Check if items is valid - if not, use hardcoded showcase data
-    if (!items) {
-        items = [
-            { id: "demo_button", type: "button", text: "Click Me!" },
-            { id: "demo_checkbox", type: "checkbox", label: "Enable Feature", checked: true },
-            { id: "demo_range", type: "range", label: "Volume", min: 0, max: 100, value: 50 },
-            { id: "demo_text", type: "text-input", label: "Your Name" },
-            {
-                id: "demo_dropdown",
-                type: "dropdown",
-                label: "Categories",
-                options: [
-                    { id: "cat1", type: "button", text: "Category 1" },
-                    { id: "cat2", type: "button", text: "Category 2" }
-                ]
-            },
-            {
-                id: "demo_radio",
-                type: "radio",
-                label: "Choose Option",
-                options: [
-                    { value: "opt1", text: "Option 1", checked: true },
-                    { value: "opt2", text: "Option 2", checked: false }
-                ]
-            },
-            { id: "demo_color", type: "color", label: "Pick Color", value: "#ff0000" },
-            {
-                id: "demo_select",
-                type: "select",
-                label: "Choose Item",
-                options: [
-                    { value: "item1", text: "Item 1", selected: true },
-                    { value: "item2", text: "Item 2", selected: false }
-                ]
-            }
-        ];
-    }
-
-    // Handle both array and object with numeric keys
     let itemsArray = [];
     if (Array.isArray(items)) {
         itemsArray = items;
     } else if (typeof items === 'object') {
-        // Convert Lua table (object with numeric keys) to array
         for (let key in items) {
             itemsArray.push(items[key]);
         }
@@ -413,7 +236,6 @@ function buildContextMenu(items) {
     if (itemsArray.length === 0) {
         $('#context-menu-container').html('<div style="color:orange; padding:20px;">Menu has 0 items</div>');
     } else {
-        // Process each item
         itemsArray.forEach((item, index) => {
             const element = createMenuElement(item);
             if (element) {
@@ -424,105 +246,93 @@ function buildContextMenu(items) {
 
     persistentOptions = itemsArray;
 
-    // Make the menu visible
     $('.context-menu').removeClass('hidden');
     $('.screen').removeClass('hidden');
     rebuildVisibleOptionList();
 
-    // Select the first option by default
     $('.option:visible').first().addClass('selected');
 
-    // Update the option counter
     updateOptionCounter();
 
-    // Focus on the menu for keyboard navigation
     setTimeout(() => {
         document.getElementById("ContextFocusCatcher").focus();
     }, 100);
 
 }
 
-// Function called from Lua to close the menu
 function closeContextMenu() {
     $('.context-menu').addClass('hidden');
     $('.screen').addClass('hidden');
     $('#context-menu-container').empty();
 }
 
-// Function to show notifications
-function ShowNotification(data) {
-    const { title, message, duration, pos, color } = data;
+window.addEventListener('message', (event) => {
+    const eventData = event.data;
+    const eventAction = eventData.name || eventData.action;
 
-    // Create notification element
-    const notification = $('<div class="notification"></div>');
-    notification.html(`
-        <div class="notification-title">${title}</div>
-        <div class="notification-message">${message}</div>
-    `);
-
-    // Apply color if specified
-    if (color) {
-        notification.css('background-color', color);
+    if (eventAction === 'ClearMenuItems') {
+        pendingMenuItems = [];
+    } else if (eventAction === 'AddMenuItem') {
+        const item = eventData.args && eventData.args[0];
+        if (item) {
+            pendingMenuItems.push(item);
+        }
+    } else if (eventAction === 'BuildMenu') {
+        buildContextMenu(pendingMenuItems);
+    } else if (eventAction === 'BuildContextMenu') {
+        const data = eventData.args && eventData.args[0];
+        if (data && data.items) {
+            buildContextMenu(data.items);
+        }
+    } else if (eventAction === 'CloseContextMenu') {
+        closeContextMenu();
+    } else if (eventAction === 'SetHeader') {
+        const data = eventData.args && eventData.args[0];
+        if (data && data.header) {
+            $('.options-qty p:first').text(data.header || 'Options');
+            updateOptionCounter();
+        }
+    } else if (eventAction === 'SetMenuInfo') {
+        const data = eventData.args && eventData.args[0];
+        if (data) {
+            if (data.title) {
+                $('.header .title').text(data.title);
+            }
+            if (data.description) {
+                $('.info .head p').text(data.title || 'Information');
+                $('.info .description').text(data.description);
+                $('.info').css('display', 'flex');
+            } else {
+                $('.info').css('display', 'none');
+            }
+        }
+    } else if (eventAction === 'FocusOptionById') {
+        const data = eventData.args && eventData.args[0];
+        if (data && data.id) {
+            $('.option').removeClass('selected');
+            $(`.option[data-id="${data.id}"]`).addClass('selected');
+            scrollToSelectedOption();
+        }
+    } else if (eventAction === 'SelectFocusedOption') {
+        selectFocusedOption();
+    } else if (eventAction === 'ShowNotification') {
+        const data = eventData.args && eventData.args[0];
+        if (data) {
+            const notification = $('<div class="notification"></div>');
+            notification.html(`
+                <div class="notification-title">${data.title}</div>
+                <div class="notification-message">${data.message}</div>
+            `);
+            if (data.color) {
+                notification.css('background-color', data.color);
+            }
+            $('#notifications-container').append(notification);
+            setTimeout(() => {
+                notification.fadeOut(() => notification.remove());
+            }, data.duration || 3000);
+        }
     }
-
-    // Add to the notifications container
-    $('#notifications-container').append(notification);
-
-    // Remove after duration
-    setTimeout(() => {
-        notification.fadeOut(() => notification.remove());
-    }, duration || 3000);
-}
-
-// Function to show/hide menu info section
-function setMenuInfoState(state) {
-    $('.info').css('display', state ? 'flex' : 'none');
-}
-
-// Function to set menu info
-function setMenuInfo(title, description) {
-    // Update the main menu title ("Context Menu" in header)
-    if (title) {
-        $('.header .title').text(title);
-    }
-
-    // Update the info section at the bottom with description
-    if (description) {
-        $('.info .head p').text(title || 'Information');
-        $('.info .description').text(description);
-        $('.info').css('display', 'flex');
-    } else {
-        // Hide info section if no description
-        $('.info').css('display', 'none');
-    }
-}
-
-// Function to set header (Options section)
-function setHeader(title) {
-    // Update the "Options" text in the options-qty section
-    $('.options-qty p:first').text(title || 'Options');
-    updateOptionCounter();
-}
-
-// Function to focus on UI
-function ForceFocusOnUI() {
-    const focusCatcher = document.getElementById("ContextFocusCatcher");
-    if (focusCatcher) {
-        focusCatcher.focus();
-    }
-}
-
-// Function to focus option by ID
-function FocusOptionById(id) {
-    $('.option').removeClass('selected');
-    $(`.option[data-id="${id}"]`).addClass('selected');
-    scrollToSelectedOption();
-}
-
-// Function to select focused option
-function SelectFocusedOption() {
-    selectFocusedOption();
-}
+});
 
 // Helper function to create menu elements
 function createMenuElement(item) {
@@ -987,7 +797,7 @@ function adjustOptionValue($option, keyCode) {
 }
 
 setTimeout(function() {
-    if (typeof ue !== 'undefined' && ue.interface && ue.interface.broadcast) {
-        ue.interface.broadcast('Ready', {});
+    if (typeof hEvent === 'function') {
+        hEvent('Ready', {});
     }
 }, 100);

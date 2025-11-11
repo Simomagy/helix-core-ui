@@ -67,7 +67,6 @@ function addNotification(id, type, title, message, duration) {
 }
 
 function removeNotification(id) {
-
     const notification = notifications[id];
     if (!notification) return;
 
@@ -82,7 +81,9 @@ function removeNotification(id) {
         notification.element.remove();
         delete notifications[id];
 
-        hEvent('NotificationClosed', id);
+        if (typeof hEvent === 'function') {
+            hEvent('NotificationClosed', { id: id });
+        }
         updatePositions();
     }, 300);
 }
@@ -100,15 +101,39 @@ function updatePositions() {
 
     if (visibleNotifs.length === 0) {
         HideContainer();
-        hEvent('AllNotificationsClosed');
+        if (typeof hEvent === 'function') {
+            hEvent('AllNotificationsClosed', {});
+        }
     }
 }
 
 function clearAll() {
-
     for (const id in notifications) {
         removeNotification(id);
     }
 }
 
-ue.interface.broadcast('Ready', {});
+window.addEventListener('message', (event) => {
+    const eventData = event.data;
+    const eventAction = eventData.name || eventData.action;
+
+    if (eventAction === 'AddNotification') {
+        const data = eventData.args && eventData.args[0];
+        if (data) {
+            addNotification(data.id, data.type, data.title, data.message, data.duration);
+        }
+    } else if (eventAction === 'RemoveNotification') {
+        const data = eventData.args && eventData.args[0];
+        if (data && data.id) {
+            removeNotification(data.id);
+        }
+    } else if (eventAction === 'ClearAll') {
+        clearAll();
+    }
+});
+
+setTimeout(function() {
+    if (typeof hEvent === 'function') {
+        hEvent('Ready', {});
+    }
+}, 100);
