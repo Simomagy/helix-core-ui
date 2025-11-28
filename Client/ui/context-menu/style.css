@@ -52,7 +52,6 @@ body {
     top: 20px;
     left: 20px;
     width: 400px;
-    max-height: 80vh;
     display: flex;
     flex-direction: column;
     z-index: 1000;
@@ -125,12 +124,14 @@ body {
 
 /* === CONTENT === */
 .context-menu .content {
-    clip-path: var(--clip-br);
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
     display: flex;
     flex-direction: column;
     outline: none;
-    background-color: #1a1a1a;
-    border-radius: 4px 4px 0 0;
+    min-height: 0;
+    flex: 1;
+    padding: 12px;
 }
 
 .context-menu .options-qty {
@@ -205,8 +206,12 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: visible;
-    padding: 14px;
     outline: none;
+    scrollbar-width: none;
+    scrollbar-color: #fff #1a1a1a;
+    box-sizing: border-box;
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 /* Custom Scrollbar */
@@ -241,6 +246,10 @@ body {
     justify-content: space-between;
     min-height: 48px;
     position: relative;
+}
+
+.option:last-child {
+    margin-bottom: 0;
 }
 
 /* Applica clip-path solo alle opzioni semplici (action, checkbox, text-display) */
@@ -831,28 +840,50 @@ body {
 
 /* === TEXT DISPLAY === */
 .option.text-display {
-    background: #151515;
-    border: 1px solid #2a2a2a;
+    background: transparent;
+    border: none;
     cursor: default;
-    padding: 16px;
-    color: #999999;
-    font-size: 14px;
-    line-height: 1.6;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: auto;
+    pointer-events: none;
 }
 
 .option.text-display:hover {
-    background: #151515;
-    border-color: #2a2a2a;
+    background: transparent;
+    border-color: transparent;
 }
 
 .option.text-display.selected {
-    background: #151515;
-    border-color: #2a2a2a;
+    background: transparent;
+    border-color: transparent;
+}
+
+.option.text-display.selected::before {
+    display: none;
+}
+
+.option.text-display .separator-icon {
+    width: 16px;
+    height: 16px;
+    stroke: var(--primary);
+    flex-shrink: 0;
+}
+
+.option.text-display .text-content {
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .option.text-display ul {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .option.text-display li {

@@ -301,8 +301,22 @@ class ContextMenu {
 
         const input = div.querySelector('input');
         const valueSpan = div.querySelector('.range-value');
+
+        // Funzione per aggiornare il background dinamico
+        const updateRangeBackground = () => {
+            const min = parseFloat(input.min) || 0;
+            const max = parseFloat(input.max) || 100;
+            const value = parseFloat(input.value) || 0;
+            const percentage = ((value - min) / (max - min)) * 100;
+            input.style.background = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${percentage}%, #2a2a2a ${percentage}%, #2a2a2a 100%)`;
+        };
+
+        // Inizializza il background
+        updateRangeBackground();
+
         input.addEventListener('input', () => {
             valueSpan.textContent = input.value;
+            updateRangeBackground();
             this.executeCallback(item.id, parseFloat(input.value));
         });
 
@@ -593,6 +607,17 @@ class ContextMenu {
         div.className = 'option text-display';
         div.dataset.id = this.sanitizeHTML(item.id);
 
+        div.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="separator-icon">
+                <path d="m16 16-4 4-4-4"/>
+                <path d="M3 12h18"/>
+                <path d="m8 8 4-4 4 4"/>
+            </svg>
+            <div class="text-content"></div>
+        `;
+
+        const textContent = div.querySelector('.text-content');
+
         if (item.is_list && Array.isArray(item.data)) {
             const ul = document.createElement('ul');
             item.data.forEach(line => {
@@ -600,9 +625,9 @@ class ContextMenu {
                 li.textContent = this.sanitizeHTML(line);
                 ul.appendChild(li);
             });
-            div.appendChild(ul);
+            textContent.appendChild(ul);
         } else {
-            div.textContent = this.sanitizeHTML(item.data);
+            textContent.textContent = this.sanitizeHTML(item.data);
         }
 
         return div;
@@ -915,7 +940,7 @@ class ContextMenu {
      * Rebuild visible options list
      */
     rebuildVisibleList() {
-        this.state.visibleElements = Array.from(document.querySelectorAll('.option:not(.hidden)'));
+        this.state.visibleElements = Array.from(document.querySelectorAll('.option:not(.hidden):not(.text-display)'));
     }
 
     /**
@@ -964,7 +989,7 @@ class ContextMenu {
      * Select first visible option
      */
     selectFirstOption() {
-        const firstOption = document.querySelector('.option:not(.hidden)');
+        const firstOption = document.querySelector('.option:not(.hidden):not(.text-display)');
         firstOption?.classList.add('selected');
     }
 
@@ -1305,7 +1330,7 @@ class ContextMenu {
      * Update option counter display
      */
     updateCounter() {
-        const allOptions = document.querySelectorAll('.option:not(.hidden)');
+        const allOptions = document.querySelectorAll('.option:not(.hidden):not(.text-display)');
         const selected = document.querySelector('.option.selected');
 
         if (allOptions.length > 0 && selected && this.elements.optionsCounter) {
