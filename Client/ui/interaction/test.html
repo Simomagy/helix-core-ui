@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaction - Test</title>
+    <link rel="stylesheet" href="css/interaction.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+        }
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #fff;
+            max-width: 300px;
+            pointer-events: auto;
+        }
+
+        .test-controls h3 {
+            margin: 0 0 15px 0;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        .test-controls button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            background: #fff;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .test-controls button:hover {
+            background: #9b9b9b;
+        }
+
+        .test-controls button.danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .test-controls button.danger:hover {
+            background: #dc2626;
+        }
+
+        #event-log {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        #event-log .log-entry {
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        #event-log .log-entry .event-name {
+            font-weight: bold;
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Controls -->
+    <div class="test-controls">
+        <h3>Interaction Test</h3>
+        <button onclick="testSingleInteraction()">Single Interaction</button>
+        <button onclick="testMultipleInteractions()">Multiple Interactions</button>
+        <button onclick="testProgressInteraction()">Progress Test</button>
+        <button onclick="clearAll()" class="danger">Clear All</button>
+
+        <div id="event-log"></div>
+    </div>
+
+    <!-- Interaction UI -->
+    <div id="interactions-container">
+        <!-- Multiple interactions will be added here dynamically -->
+    </div>
+
+    <!-- Template for interaction item (hidden) -->
+    <div id="interaction-template" class="interaction-item" style="display: none;">
+        <div class="key-wrapper">
+            <svg class="progress-border" viewBox="0 0 56 52" xmlns="http://www.w3.org/2000/svg">
+                <path class="progress-path"
+                    d="M 2 2 L 54 2 L 54 42 L 42 50 L 2 50 Z"
+                    fill="none"
+                    stroke="var(--primary)"
+                    stroke-width="2"
+                    stroke-dasharray="0 1000"
+                    pathLength="1000"/>
+            </svg>
+            <div class="key-container">
+                <p class="key-text">TAB</p>
+            </div>
+        </div>
+        <div class="label-container">
+            <p class="interaction-text">INTERACTION</p>
+        </div>
+    </div>
+
+    <script>
+        // Mock hEvent - Logs all Lua callbacks
+        const eventLog = [];
+        window.hEvent = function(eventName, data) {
+            const logEntry = {
+                time: new Date().toLocaleTimeString(),
+                event: eventName,
+                data: data
+            };
+            eventLog.push(logEntry);
+
+            console.log(`[Lua Event] ${eventName}:`, data);
+
+            // Update UI log
+            const logDiv = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="event-name">${eventName}</span>: ${JSON.stringify(data)}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+
+            // Keep only last 10 entries
+            while (logDiv.children.length > 10) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        };
+
+        // Helper to send NUI message
+        function sendNUIMessage(action, args = null) {
+            window.postMessage({
+                name: action,
+                args: args ? [args] : []
+            });
+        }
+
+        // Test: Single Interaction
+        let interactionCount = 0;
+        function testSingleInteraction() {
+            interactionCount++;
+            sendNUIMessage('AddInteraction', {
+                id: `test_${interactionCount}`,
+                text: 'Open Door',
+                key: 'E'
+            });
+        }
+
+        // Test: Multiple Interactions
+        function testMultipleInteractions() {
+            const interactions = [
+                { text: 'Open Door', key: 'E' },
+                { text: 'Take Item', key: 'F' },
+                { text: 'Talk', key: 'G' }
+            ];
+
+            interactions.forEach((int, i) => {
+                interactionCount++;
+                sendNUIMessage('AddInteraction', {
+                    id: `multi_${interactionCount}`,
+                    text: int.text,
+                    key: int.key
+                });
+            });
+        }
+
+        // Test: Progress Interaction
+        function testProgressInteraction() {
+            interactionCount++;
+            const id = `progress_${interactionCount}`;
+
+            sendNUIMessage('AddInteraction', {
+                id: id,
+                text: 'Lockpicking',
+                key: 'E',
+                duration: 3000
+            });
+
+            // Simulate progress
+            setTimeout(() => {
+                sendNUIMessage('StartProgress', { id: id });
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    sendNUIMessage('UpdateProgress', { id: id, progress: progress });
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            sendNUIMessage('RemoveInteraction', { id: id });
+                        }, 500);
+                    }
+                }, 300);
+            }, 1000);
+        }
+
+        // Clear all
+        function clearAll() {
+            sendNUIMessage('ClearAll');
+        }
+
+        // Show single interaction on load for demo
+        setTimeout(() => {
+            testProgressInteraction();
+        }, 500);
+    </script>
+
+    <!-- Interaction Script -->
+    <script src="js/interaction.js"></script>
+</body>
+</html>
+

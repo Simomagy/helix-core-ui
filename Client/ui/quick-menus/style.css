@@ -1,272 +1,166 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 :root {
-    --fontxsmall: clamp(10px, 0.39375vh, 20px);
-    --fontsmall: clamp(14px, 0.45vh, 20px);
-    --fontmedium: clamp(16px, 0.50625vh, 30px);
-    --fontlarge: clamp(20px, 0.675vh, 40px);
-    --fontxl: clamp(30px, 1.125vh, 60px);
-    --padlittle: clamp(5px, 0.16875vh, 25px);
-    --padmedium: clamp(10px, 0.28125vh, 30px);
-    --padlarge: clamp(15px, 0.5625vh, 100px);
-    --padlarger: clamp(20px, 0.675vh, 150px);
-    --gap: clamp(0.7rem, 0.005625vh, 2rem);
-    --gaplarge: clamp(1rem, 0.5625vh, 4rem);
-    --radius: clamp(12px, 0.45vh, 30px);
-    --scale: 1;
-}
+    /* Bottom right corner */
+    --clip-br: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+    --clip-br-sm: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
 
-svg {
-    transition: all 0.3s ease;
-}
+    /* Top right corner */
+    --clip-tr: polygon(0 0, calc(100% - 24px) 0, 100% calc(100% - 30px), 100% 100%, 0% 100%);
+    --clip-tr-sm: polygon(0 0, calc(100% - 16px) 0, 100% calc(100% - 20px), 100% 100%, 0% 100%);
 
-body {
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    transition: all 0.3s ease;
-    pointer-events: all;
-    opacity: 1;
-    margin: 0;
-    padding: 0;
-    font-family: 'Outfit', sans-serif;
-    user-select: none;
-    /* background: rgba(0,0,0,0.5); */
+    /* Colors */
+    --primary: #ffffff;
+    --neutral: #424242;
+    --bg-dark: #1a1a1a;
 }
 
 * {
-    padding: 0;
     margin: 0;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    font-family: 'Outfit', sans-serif;
+    padding: 0;
     box-sizing: border-box;
-    color: white;
-    font-style: normal;
-    letter-spacing: .1vh;
+    font-family: 'Tomorrow', sans-serif;
+    user-select: none;
 }
 
-body>.bg {
-    position: absolute;
+body {
     width: 100vw;
     height: 100vh;
-    z-index: -3;
-    background-image: url(./media/bg.png);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    pointer-events: none;
+    overflow: hidden;
+    background: transparent;
 }
 
 .input-menu,
 .confirm-menu {
     position: absolute;
-    left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) scale(var(--scale));
-    width: 320px;
-    background-color: #161616E5;
-    border-radius: 16px;
-    pointer-events: none;
-    opacity: 0;
-    transition: all 0.2s ease;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
-    z-index: 10;
+    width: 400px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 body.in-input-menu .input-menu,
 body.in-confirm-menu .confirm-menu {
-    pointer-events: all;
     opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
 }
 
+/* === HEADER === */
 .header {
-    width: 100%;
-    height: 70px;
+    background: var(--primary);
+    padding: 8px 24px;
+    width: fit-content;
+    clip-path: var(--clip-tr-sm);
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    gap: 12px;
-    border-bottom: 1px solid #FFFFFF24;
-    position: relative;
+    justify-content: space-between;
+    min-width: 150px;
 }
 
 .header .title {
-    font-size: 18px;
-    font-weight: 600;
-    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    color: #000;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.05em;
+    margin: 0;
 }
 
 .header .close-panel {
-    position: absolute;
-    right: 20px;
-    cursor: pointer;
-    display: none;
+    display: none; /* Hidden by default in new design, usually Esc to close */
 }
 
+/* === CONTENT === */
 .content {
+    background: var(--bg-dark);
+    padding: 20px;
+    clip-path: var(--clip-br);
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 20px;
-    width: calc(100% -40px);
-    align-self: center;
 }
 
+/* === INPUT === */
 .content input {
     width: 100%;
-    height: 44px;
-    border-radius: 8px;
-    background-color: transparent;
-    border: 2px solid #2E2E2E;
-    color: #EDEDED;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--primary);
     padding: 0 12px;
-    font-size: 16px;
+    font-size: 14px;
     outline: none;
-    transition: all .2s ease;
-}
-
-.content input:hover {
-    background-color: #FFFFFF1A;
-    border-color: #505050;
+    clip-path: var(--clip-br-sm);
+    transition: all 0.2s ease;
 }
 
 .content input:focus {
-    border: 2px solid #EDEDED;
-    background-color: #343434;
+    background: rgba(0, 0, 0, 0.5);
+    border-color: var(--primary);
 }
 
+.content input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+/* === MESSAGE === */
 .content .message {
-    font-size: 16px;
-    font-weight: 500;
-    color: #FFFFFF99;
+    color: #d4d4d4;
+    font-size: 14px;
+    line-height: 1.4;
     margin: 0;
-    text-align: center;
 }
 
+/* === BUTTONS === */
 .buttons {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 12px;
+    margin-top: 10px;
 }
 
 .buttons button {
-    height: 44px;
-    padding: 0 16px;
-    border-radius: 8px;
+    height: 36px;
+    padding: 0 20px;
     border: none;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 1px;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
     cursor: pointer;
+    clip-path: var(--clip-br-sm);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Secondary Button (Cancel) */
 .buttons button.cancel {
-    background-color: #FFFFFF12;
-    color: #EDEDED;
+    background: #2a2a2a;
+    color: #888;
+    border: 1px solid #333;
 }
 
 .buttons button.cancel:hover {
-    background-color: #FFFFFF24;
+    background: #333;
+    color: #fff;
 }
 
+/* Primary Button (Confirm) */
 .buttons button.confirm {
-    background-color: #2DFF9B24;
-    color: #57FFAF;
+    background: var(--primary);
+    color: #000;
 }
 
 .buttons button.confirm:hover {
-    background-color: #2DFF9B36;
-}
-
-
-::-webkit-scrollbar {
-    width: 0.5vh;
-}
-
-::-webkit-scrollbar-track {
-    background: #28282A;
-    border-radius: 23px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #00FBDD;
-    border-radius: 23px;
-}
-
-@media screen and (max-height: 4000px) {
-    body {
-        --scale: 1.5;
-    }
-}
-
-@media screen and (max-height: 3500px) {
-    body {
-        --scale: 1.5;
-    }
-}
-
-@media screen and (max-height: 3000px) {
-    body {
-        --scale: 1.5;
-    }
-}
-
-@media screen and (max-height: 2500px) {
-    body {
-        --scale: 1.4;
-    }
-}
-
-@media screen and (max-height: 2000px) {
-    body {
-        --scale: 1.3;
-    }
-}
-
-@media screen and (max-height: 1500px) {
-    body {
-        --scale: 1.2;
-    }
-}
-
-@media screen and (max-height: 1250px) {
-    body {
-        --scale: 1;
-    }
-}
-
-@media screen and (max-height: 1000px) {
-    body {
-        --scale: 0.9;
-    }
-}
-
-@media screen and (max-height: 900px) {
-    body {
-        --scale: 0.87;
-    }
-}
-
-@media screen and (max-height: 800px) {
-    body {
-        --scale: 0.8;
-    }
-}
-
-@media screen and (max-height: 700px) {
-    body {
-        --scale: 0.7;
-    }
-}
-
-@media screen and (max-height: 600px) {
-    body {
-        --scale: 0.6;
-    }
+    background: #e0e0e0;
 }

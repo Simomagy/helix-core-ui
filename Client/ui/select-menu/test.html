@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Menu Test</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: black !important;
+            background-image: none !important;
+        }
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <button onclick="showMenu()">Show Menu</button>
+        <button onclick="hideMenu()">Hide Menu</button>
+        <button onclick="setPlayers()">Set Players (32/64)</button>
+        <button onclick="addOption1()">Add Frontlines</button>
+        <button onclick="addOption2()">Add TDM</button>
+        <button onclick="addManyOptions()">Add Many (Scroll Test)</button>
+        <button onclick="buildMenu()">Build Menu</button>
+        <button onclick="clearOptions()">Clear Options</button>
+    </div>
+
+    <div class="configurable-menu">
+        <div class="options-selector">
+            <header>
+                <h1>Select Gamemode</h1>
+                <div class="players-count">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span class="value">0/0</span>
+                </div>
+            </header>
+
+            <div class="slider-container">
+                <button class="slide-btn left disabled">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+
+                <div class="options-wrapper">
+                    <div class="scroller">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+
+                <button class="slide-btn right disabled">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+
+            <div class="pagination">
+                <!-- Dots injected here -->
+            </div>
+        </div>
+
+        <div class="details-panel">
+            <div class="info-col">
+                <h2 class="option-name">Select an Option</h2>
+                <div class="stats-list">
+                    <!-- Stats injected here -->
+                </div>
+            </div>
+            <div class="desc-col">
+                <p class="option-description">Description will appear here...</p>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn secondary return">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                Return
+            </button>
+            <button class="action-btn primary select">
+                Confirm
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Mock hEvent
+        window.hEvent = function(name, data) {
+            console.log('Event sent:', name, data);
+        };
+
+        function showMenu() {
+            window.postMessage({ name: 'ShowMenu' }, '*');
+        }
+
+        function hideMenu() {
+            window.postMessage({ name: 'HideMenu' }, '*');
+        }
+
+        function setPlayers() {
+            window.postMessage({
+                name: 'SetPlayersCount',
+                args: [{ count: '32/64' }]
+            }, '*');
+        }
+
+        function addOption1() {
+            window.postMessage({
+                name: 'AddOption',
+                args: [{
+                    id: 'gm_frontlines',
+                    name: 'Frontlines',
+                    image: 'https://placehold.co/400x250/1a1a1a/ffffff?text=Frontlines',
+                    description: 'Large scale combat with objectives and vehicles. Capture points to push the frontline forward.',
+                    info: [
+                        { name: 'Players', value: '64' },
+                        { name: 'Time', value: '30m' },
+                        { name: 'Vehicles', value: 'Yes' }
+                    ]
+                }]
+            }, '*');
+        }
+
+        function addOption2() {
+            window.postMessage({
+                name: 'AddOption',
+                args: [{
+                    id: 'gm_tdm',
+                    name: 'Team Deathmatch',
+                    image: 'https://placehold.co/400x250/1a1a1a/ffffff?text=TDM',
+                    description: 'Classic team vs team combat. First team to reach the score limit wins.',
+                    info: [
+                        { name: 'Players', value: '24' },
+                        { name: 'Time', value: '15m' },
+                        { name: 'Vehicles', value: 'No' }
+                    ]
+                }]
+            }, '*');
+        }
+
+        function addManyOptions() {
+            const modes = ['Domination', 'Capture the Flag', 'Search & Destroy', 'Free for All', 'Gun Game', 'Infection'];
+            modes.forEach((mode, i) => {
+                window.postMessage({
+                    name: 'AddOption',
+                    args: [{
+                        id: `gm_test_${i}`,
+                        name: mode,
+                        image: `https://placehold.co/400x250/1a1a1a/ffffff?text=${mode.replace(/ /g, '+')}`,
+                        description: `Description for ${mode}. This is a test description to verify layout and scrolling.`,
+                        info: [
+                            { name: 'Players', value: '32' },
+                            { name: 'Time', value: '20m' },
+                            { name: 'Mode', value: 'Test' }
+                        ]
+                    }]
+                }, '*');
+            });
+        }
+
+        function buildMenu() {
+            window.postMessage({ name: 'BuildMenu' }, '*');
+        }
+
+        function clearOptions() {
+            window.postMessage({ name: 'ClearOptions' }, '*');
+        }
+    </script>
+</body>
+</html>

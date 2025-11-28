@@ -1,16 +1,45 @@
-/* Interaction System CSS - Updated for multiple interactions */
-@import url('https://fonts.googleapis.com/css2?family=Hind&family=Montserrat:wght@600&display=swap');
+/**
+ * HELIX Interaction System - Modern Design System
+ * Font: Tomorrow
+ * Primary: White
+ * Background: #111111
+ * Accent: var(--primary)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+    /* Bottom right corner */
+    --clip-br: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+    --clip-br-sm: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+    --clip-br-lg: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    /* Top right corner */
+    --clip-tr: polygon(0 0, calc(100% - 24px) 0, 100% calc(100% - 30px), 100% 100%, 0% 100%);
+    --clip-tr-sm: polygon(0 0, calc(100% - 16px) 0, 100% calc(100% - 20px), 100% 100%, 0% 100%);
+    --clip-tr-lg: polygon(0 0, calc(100% - 32px) 0, 100% calc(100% - 40px), 100% 100%, 0% 100%);
+    /* Colors */
+    --primary: #ffffff;
+    --neutral: #424242;
+}
+
+/* === RESET & BASE === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Tomorrow', sans-serif;
+}
 
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Montserrat', sans-serif;
     user-select: none;
     background: transparent;
-    pointer-events: none;  /* Don't capture mouse events */
+    overflow: hidden;
+    background-color: black;
 }
 
-/* Container for all interactions */
+/* === CONTAINER === */
 #interactions-container {
     position: fixed;
     top: 50%;
@@ -18,9 +47,8 @@ body {
     transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    pointer-events: none;
+    gap: 12px;
+    align-items: flex-start;
     opacity: 1;
     transition: opacity 0.3s ease;
 }
@@ -30,11 +58,11 @@ body {
     pointer-events: none;
 }
 
-/* Individual interaction item */
+/* === INTERACTION ITEM === */
 .interaction-item {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.3s ease;
@@ -45,114 +73,129 @@ body {
     transform: translateY(0);
 }
 
-/* Key indicator with circle */
-.key-indicator {
+/* === KEY WRAPPER === */
+.key-wrapper {
     position: relative;
-    width: 60px;
-    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.key-text {
+.progress-border {
     position: absolute;
+    width: 86px;
+    height: 56px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: white;
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    margin: 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 1;
 }
 
-.circle {
-    width: 60px;
-    height: 60px;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-.circle svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-}
-
-/* Progress and background circles */
-.progress-circle,
-.back-circle {
-    fill: none;
-    stroke-width: 2;
-}
-
-.back-circle {
-    stroke: rgba(255, 255, 255, 0.3);
-    stroke-dasharray: 100, 100;
-}
-
-.progress-circle {
-    stroke: transparent;
-    stroke-dasharray: 0, 100;
+.progress-path {
     transition: stroke-dasharray 0.1s linear;
 }
 
-/* When pressing key */
-.interaction-item.pressing .progress-circle {
-    stroke: #00FBDD;
+.interaction-item.pressing .progress-path {
+    stroke: var(--primary);
+}
+
+/* === KEY CONTAINER === */
+.key-container {
+    position: relative;
+    padding: 10px 14px;
+    background: var(--primary);
+    clip-path: var(--clip-br-sm);
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background 0.2s ease;
+}
+
+.interaction-item.pressing .key-container {
+    background: #d4d4d4;
+}
+
+.key-text {
+    color: #000000;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin: 0;
+    z-index: 2;
+    transition: all 0.2s ease;
 }
 
 .interaction-item.pressing .key-text {
-    color: #00FBDD;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: scale(0.95);
 }
 
-/* Interaction text */
+/* === LABEL CONTAINER === */
+.label-container {
+    position: relative;
+    padding: 10px 16px;
+    background: #1a1a1a;
+    clip-path: var(--clip-br-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .interaction-text {
-    color: white;
-    font-size: 18px;
+    color: var(--primary);
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 3px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     margin: 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     white-space: nowrap;
+    position: relative;
+    z-index: 1;
 }
 
-/* Animation for completion */
+
+/* === ANIMATION COMPLETION === */
 @keyframes complete {
     0% {
         transform: scale(1);
+        opacity: 1;
     }
     50% {
-        transform: scale(1.1);
+        transform: scale(1.05);
+        opacity: 1;
     }
     100% {
-        transform: scale(1);
+        transform: scale(0.95);
         opacity: 0;
     }
 }
 
 .interaction-item.complete {
-    animation: complete 0.5s ease forwards;
+    animation: complete 0.4s ease forwards;
 }
 
-/* Responsive adjustments */
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
     .interaction-item {
-        gap: 15px;
+        gap: 6px;
     }
-    
-    .key-indicator {
-        width: 50px;
-        height: 50px;
+
+    .key-container {
+        padding: 8px 12px;
+        min-width: 40px;
     }
-    
+
+    .label-container {
+        padding: 8px 12px;
+    }
+
     .key-text {
-        font-size: 16px;
+        font-size: 12px;
     }
-    
+
     .interaction-text {
-        font-size: 14px;
+        font-size: 10px;
     }
 }

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification - Test</title>
+    <link rel="stylesheet" href="css/notification.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+        }
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #fff;
+            max-width: 300px;
+            pointer-events: auto;
+        }
+
+        .test-controls h3 {
+            margin: 0 0 15px 0;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        .test-controls button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            background: #fff;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .test-controls button:hover {
+            background: #9b9b9b;
+        }
+
+        .test-controls button.success {
+            background: #10B981;
+            color: white;
+        }
+
+        .test-controls button.success:hover {
+            background: #059669;
+        }
+
+        .test-controls button.error {
+            background: #EF4444;
+            color: white;
+        }
+
+        .test-controls button.error:hover {
+            background: #DC2626;
+        }
+
+        .test-controls button.warning {
+            background: #F59E0B;
+            color: white;
+        }
+
+        .test-controls button.warning:hover {
+            background: #D97706;
+        }
+
+        .test-controls button.info {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .test-controls button.info:hover {
+            background: #2563EB;
+        }
+
+        .test-controls button.danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .test-controls button.danger:hover {
+            background: #dc2626;
+        }
+
+        #event-log {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        #event-log .log-entry {
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        #event-log .log-entry .event-name {
+            font-weight: bold;
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Controls -->
+    <div class="test-controls">
+        <h3>Notification Test</h3>
+        <button onclick="testSuccess()" class="success">Success</button>
+        <button onclick="testError()" class="error">Error</button>
+        <button onclick="testWarning()" class="warning">Warning</button>
+        <button onclick="testInfo()" class="info">Info</button>
+        <button onclick="testMultiple()">Multiple</button>
+        <button onclick="clearAll()" class="danger">Clear All</button>
+
+        <div id="event-log"></div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Template for notification (hidden) -->
+    <div id="notification-template" class="notification" style="display: none;">
+        <div class="notification-icon">
+            <!-- Icon will be set based on type -->
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">Title</div>
+            <div class="notification-message">Message</div>
+        </div>
+        <div class="notification-close">×</div>
+        <div class="notification-progress"></div>
+    </div>
+
+    <script>
+        // Mock hEvent - Logs all Lua callbacks
+        const eventLog = [];
+        window.hEvent = function(eventName, data) {
+            const logEntry = {
+                time: new Date().toLocaleTimeString(),
+                event: eventName,
+                data: data
+            };
+            eventLog.push(logEntry);
+
+            console.log(`[Lua Event] ${eventName}:`, data);
+
+            // Update UI log
+            const logDiv = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="event-name">${eventName}</span>: ${JSON.stringify(data)}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+
+            // Keep only last 10 entries
+            while (logDiv.children.length > 10) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        };
+
+        // Helper to send NUI message
+        function sendNUIMessage(action, args = null) {
+            window.postMessage({
+                name: action,
+                args: args ? [args] : []
+            });
+        }
+
+        let notificationCount = 0;
+
+        function testSuccess() {
+            notificationCount++;
+            sendNUIMessage('AddNotification', {
+                id: `success_${notificationCount}`,
+                type: 'success',
+                title: 'Success',
+                message: 'Operation completed successfully.',
+                duration: 5000
+            });
+        }
+
+        function testError() {
+            notificationCount++;
+            sendNUIMessage('AddNotification', {
+                id: `error_${notificationCount}`,
+                type: 'error',
+                title: 'Error',
+                message: 'Something went wrong.',
+                duration: 5000
+            });
+        }
+
+        function testWarning() {
+            notificationCount++;
+            sendNUIMessage('AddNotification', {
+                id: `warning_${notificationCount}`,
+                type: 'warning',
+                title: 'Warning',
+                message: 'Please be careful.',
+                duration: 5000
+            });
+        }
+
+        function testInfo() {
+            notificationCount++;
+            sendNUIMessage('AddNotification', {
+                id: `info_${notificationCount}`,
+                type: 'info',
+                title: 'Info',
+                message: 'Here is some information.',
+                duration: 5000
+            });
+        }
+
+        function testMultiple() {
+            testSuccess();
+            setTimeout(testError, 500);
+            setTimeout(testWarning, 1000);
+            setTimeout(testInfo, 1500);
+        }
+
+        function clearAll() {
+            sendNUIMessage('ClearAll');
+        }
+
+        // Show a notification on load
+        setTimeout(() => {
+            testSuccess();
+        }, 500);
+    </script>
+
+    <!-- Notification Script -->
+    <script src="js/notification.js"></script>
+</body>
+</html>

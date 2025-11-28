@@ -184,6 +184,33 @@
                         type: 'checkbox',
                         label: 'Auto Save',
                         checked: true
+                    },
+                    {
+                        id: 'color1',
+                        type: 'color',
+                        label: 'Pick Color',
+                        value: '#00FBDD'
+                    },
+                    {
+                        id: 'list1',
+                        type: 'list-picker',
+                        label: 'Difficulty',
+                        list: [
+                            { label: 'Easy', value: 1 },
+                            { label: 'Medium', value: 2 },
+                            { label: 'Hard', value: 3 },
+                            { label: 'Expert', value: 4 }
+                        ]
+                    },
+                    {
+                        id: 'radio1',
+                        type: 'radio',
+                        label: 'Game Mode',
+                        options: [
+                            { value: 'single', text: 'Single Player', checked: true },
+                            { value: 'multi', text: 'Multiplayer' },
+                            { value: 'coop', text: 'Co-op' }
+                        ]
                     }
                 ]
             });

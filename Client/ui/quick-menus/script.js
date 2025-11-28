@@ -1,138 +1,157 @@
 /**
- * Sanitizes HTML input to prevent XSS attacks.
- * Converts potentially dangerous characters to their HTML entity equivalents.
- *
- * @param {string} str - The string to sanitize
- * @returns {string} The sanitized string safe for insertion into DOM
+ * HELIX Quick Menu System
+ * Manages input and confirmation dialogs
  */
-function sanitizeHTML(str) {
-    if (str === null || str === undefined) {
-        return '';
+class QuickMenuSystem {
+    constructor() {
+        this.elements = {
+            inputMenu: document.querySelector('.input-menu'),
+            confirmMenu: document.querySelector('.confirm-menu'),
+            inputField: document.querySelector('.input-menu input'),
+            inputTitle: document.querySelector('.input-menu .title'),
+            confirmTitle: document.querySelector('.confirm-menu .title'),
+            confirmMessage: document.querySelector('.confirm-menu .message')
+        };
+
+        this.state = {
+            isInputOpen: false,
+            isConfirmOpen: false
+        };
+
+        this.init();
     }
-    str = String(str);
 
-    // Create a temporary element and use textContent to escape HTML
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+    init() {
+        this.setupEventListeners();
 
-window.addEventListener('message', (event) => {
-    const eventData = event.data;
-    const eventAction = eventData.name || eventData.action;
+        // Listen for game messages
+        window.addEventListener('message', (event) => this.handleMessage(event));
 
-    if (eventAction === 'ShowInputMenu') {
-        const data = eventData.args && eventData.args[0];
-        if (data) {
-            $('.input-menu .header .title').text(sanitizeHTML(data.title));
-            $('.input-menu input').attr('placeholder', sanitizeHTML(data.placeholder));
-            $('.input-menu input').val('');
-            $('body').addClass('in-input-menu');
-
-            const focusInput = () => {
-                const input = $('.input-menu input');
-                input.focus();
-                input.get(0)?.focus();
-            };
-
-            focusInput();
-            setTimeout(focusInput, 50);
-            setTimeout(focusInput, 150);
-        }
-    } else if (eventAction === 'HideInputMenu') {
-        $('.input-menu input').val('');
-        $('body').removeClass('in-input-menu');
-    } else if (eventAction === 'ShowConfirmMenu') {
-        const data = eventData.args && eventData.args[0];
-        if (data) {
-            $('.confirm-menu .header .title').text(sanitizeHTML(data.title));
-            $('.confirm-menu .message').text(sanitizeHTML(data.message));
-            $('body').addClass('in-confirm-menu');
-        }
-    } else if (eventAction === 'HideConfirmMenu') {
-        $('body').removeClass('in-confirm-menu');
+        // Notify ready
+        setTimeout(() => {
+            this.sendEvent('Ready', {});
+        }, 100);
     }
-});
 
-function sendInputValue(value) {
-    const safeValue = value || "";
-    if (typeof hEvent === 'function') {
-        hEvent('OnInputConfirmed', { value: safeValue });
+    setupEventListeners() {
+        // === INPUT MENU ===
+        const inputConfirmBtn = this.elements.inputMenu.querySelector('.confirm');
+        const inputCancelBtn = this.elements.inputMenu.querySelector('.cancel');
+
+        inputConfirmBtn.addEventListener('click', () => this.submitInput());
+        inputCancelBtn.addEventListener('click', () => this.cancelInput());
+
+        this.elements.inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.submitInput();
+        });
+
+        // === CONFIRM MENU ===
+        const confirmYesBtn = this.elements.confirmMenu.querySelector('.confirm');
+        const confirmNoBtn = this.elements.confirmMenu.querySelector('.cancel');
+
+        confirmYesBtn.addEventListener('click', () => this.confirmYes());
+        confirmNoBtn.addEventListener('click', () => this.confirmNo());
+
+        // === GLOBAL KEYS ===
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (this.state.isInputOpen) this.cancelInput();
+                if (this.state.isConfirmOpen) this.confirmNo();
+            }
+        });
     }
-}
 
-function sendInputCancel() {
-    if (typeof hEvent === 'function') {
-        hEvent('OnInputCanceled', {});
-    }
-}
+    handleMessage(event) {
+        const data = event.data;
+        const action = data.name || data.action;
+        const args = data.args?.[0];
 
-function sendConfirmYes() {
-    if (typeof hEvent === 'function') {
-        hEvent('OnConfirmYes', {});
-    }
-}
+        const actions = {
+            'ShowInputMenu': () => this.showInputMenu(args),
+            'HideInputMenu': () => this.hideInputMenu(),
+            'ShowConfirmMenu': () => this.showConfirmMenu(args),
+            'HideConfirmMenu': () => this.hideConfirmMenu()
+        };
 
-function sendConfirmNo() {
-    if (typeof hEvent === 'function') {
-        hEvent('OnConfirmNo', {});
-    }
-}
-
-// Input menu events
-// $(document).ready(function() {
-// Input menu confirm button
-$('.input-menu .confirm').on('click', function () {
-    const value = $('.input-menu input').val();
-    sendInputValue(value);
-});
-
-// Input menu cancel button
-$('.input-menu .cancel').on('click', function () {
-    sendInputCancel();
-});
-
-// Input menu close button (X)
-$('.input-menu .close-panel').on('click', function () {
-    sendInputCancel();
-});
-
-// Confirm menu yes button
-$('.confirm-menu .confirm').on('click', function () {
-    sendConfirmYes();
-});
-
-// Confirm menu no button
-$('.confirm-menu .cancel').on('click', function () {
-    sendConfirmNo();
-});
-
-// Confirm menu close button (X)
-$('.confirm-menu .close-panel').on('click', function () {
-    sendConfirmNo();
-});
-
-// Handle Enter key in input field
-$('.input-menu input').on('keypress', function (e) {
-    if (e.which === 13) { // Enter key
-        const value = $(this).val();
-        sendInputValue(value);
-    }
-});
-
-// Handle Escape key for both menus
-$(document).on('keydown', function (e) {
-    if (e.which === 27) { // Escape key
-        if ($('body').hasClass('in-input-menu')) {
-            sendInputCancel();
-        } else if ($('body').hasClass('in-confirm-menu')) {
-            sendConfirmNo();
+        if (actions[action]) {
+            actions[action]();
         }
     }
-});
 
-setTimeout(function() {
-    if (typeof hEvent === 'function') {
-        hEvent('Ready', {});
+    // === INPUT MENU METHODS ===
+
+    showInputMenu(data) {
+        if (!data) return;
+
+        this.elements.inputTitle.textContent = data.title || 'ENTER VALUE';
+        this.elements.inputField.placeholder = data.placeholder || '';
+        this.elements.inputField.value = '';
+        this.elements.inputField.type = data.type || 'text';
+
+        document.body.classList.add('in-input-menu');
+        this.state.isInputOpen = true;
+
+        // Focus input
+        setTimeout(() => {
+            this.elements.inputField.focus();
+        }, 50);
     }
-}, 100);
+
+    hideInputMenu() {
+        document.body.classList.remove('in-input-menu');
+        this.state.isInputOpen = false;
+        this.elements.inputField.blur();
+    }
+
+    submitInput() {
+        const value = this.elements.inputField.value;
+        this.sendEvent('OnInputConfirmed', { value: value });
+        // Note: We usually wait for server response to close, but we can close immediately if preferred
+        // or wait for HideInputMenu event
+    }
+
+    cancelInput() {
+        this.sendEvent('OnInputCanceled', {});
+        this.hideInputMenu();
+    }
+
+    // === CONFIRM MENU METHODS ===
+
+    showConfirmMenu(data) {
+        if (!data) return;
+
+        this.elements.confirmTitle.textContent = data.title || 'CONFIRM';
+        this.elements.confirmMessage.textContent = data.message || 'Are you sure?';
+
+        document.body.classList.add('in-confirm-menu');
+        this.state.isConfirmOpen = true;
+    }
+
+    hideConfirmMenu() {
+        document.body.classList.remove('in-confirm-menu');
+        this.state.isConfirmOpen = false;
+    }
+
+    confirmYes() {
+        this.sendEvent('OnConfirmYes', {});
+        // Typically wait for server or explicit hide command
+    }
+
+    confirmNo() {
+        this.sendEvent('OnConfirmNo', {});
+        this.hideConfirmMenu();
+    }
+
+    // === HELPERS ===
+
+    sendEvent(eventName, data) {
+        if (typeof hEvent === 'function') {
+            hEvent(eventName, data);
+        } else {
+            console.log(`[Mock hEvent] ${eventName}`, data);
+        }
+    }
+}
+
+// Initialize
+const quickMenuSystem = new QuickMenuSystem();

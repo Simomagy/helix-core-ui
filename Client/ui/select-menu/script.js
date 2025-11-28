@@ -1,219 +1,269 @@
-let pendingOptions = [];
-let currentOptions = [];
-let actualPage = 0;
-
 /**
- * Sanitizes HTML input to prevent XSS attacks.
- * Converts potentially dangerous characters to their HTML entity equivalents.
- *
- * @param {string} str - The string to sanitize
- * @returns {string} The sanitized string safe for insertion into DOM
+ * HELIX Select Menu System
+ * Manages the gamemode/map selection interface
  */
-function sanitizeHTML(str) {
-    if (str === null || str === undefined) {
-        return '';
+class SelectMenuSystem {
+    constructor() {
+        this.state = {
+            options: [],
+            currentPage: 0,
+            itemsPerPage: 3,
+            selectedOptionId: null
+        };
+
+        this.elements = {
+            container: document.querySelector('.configurable-menu'),
+            optionsScroller: document.querySelector('.scroller'),
+            pagination: document.querySelector('.pagination'),
+            slideLeft: document.querySelector('.slide-btn.left'),
+            slideRight: document.querySelector('.slide-btn.right'),
+
+            headerTitle: document.querySelector('header h1'),
+            headerCount: document.querySelector('.players-count .value'),
+
+            detailsName: document.querySelector('.details-panel .option-name'),
+            detailsDesc: document.querySelector('.details-panel .option-description'),
+            detailsStats: document.querySelector('.details-panel .stats-list'),
+
+            btnSelect: document.querySelector('.action-btn.select'),
+            btnReturn: document.querySelector('.action-btn.return')
+        };
+
+        this.init();
     }
-    str = String(str);
 
-    // Create a temporary element and use textContent to escape HTML
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+    init() {
+        this.setupEventListeners();
 
-// DOM References
-const $options = {
-    header: {
-        title: $('.options-selector header h1'),
-        playersCount: $('.options-selector header .players-count .value'),
-    },
-    slider: {
-        wrapper: $('.options-selector .slider'),
-        options: $('.options-selector .slider .options .scroller'),
-        button: $('.options-selector .slider .slide'),
-        pages: $('.options-selector .slider .slider-pages'),
+        // Listen for game messages
+        window.addEventListener('message', (event) => this.handleMessage(event));
+
+        // Notify ready
+        setTimeout(() => {
+            this.sendEvent('Ready', {});
+        }, 100);
     }
-};
 
-const $selectedOptionInfo = {
-    name: $('.selected-option .option-name'),
-    description: $('.selected-option .option-description'),
-    infoList: $('.selected-option .info .list'),
-};
+    setupEventListeners() {
+        this.elements.slideLeft.addEventListener('click', () => this.prevPage());
+        this.elements.slideRight.addEventListener('click', () => this.nextPage());
 
-window.addEventListener('message', (event) => {
-    const eventData = event.data;
-    const eventAction = eventData.name || eventData.action;
+        this.elements.btnSelect.addEventListener('click', () => this.confirmSelection());
+        this.elements.btnReturn.addEventListener('click', () => this.closeMenu());
 
-    if (eventAction === 'ClearOptions') {
-        pendingOptions = [];
-        currentOptions = [];
-        actualPage = 0;
-    } else if (eventAction === 'AddOption') {
-        const data = eventData.args && eventData.args[0];
-        if (data) {
-            let option = pendingOptions.find(opt => opt.id === data.id);
-            if (!option) {
-                option = {
-                    id: data.id,
-                    name: data.name,
-                    image: data.image,
-                    description: data.description,
-                    info: data.info || []
-                };
-                pendingOptions.push(option);
-            }
-        }
-    } else if (eventAction === 'BuildMenu') {
-        currentOptions = pendingOptions;
-        renderOptions();
-        if (currentOptions.length > 0) {
-            setSelectedOptionInfo(currentOptions[0]);
-        }
-    } else if (eventAction === 'SetMenuTitle') {
-        const data = eventData.args && eventData.args[0];
-        if (data && data.title) {
-            $options.header.title.text(sanitizeHTML(data.title));
-        }
-    } else if (eventAction === 'SetPlayersCount') {
-        const data = eventData.args && eventData.args[0];
-        if (data && data.count !== undefined) {
-            $options.header.playersCount.text(data.count);
-        }
-    } else if (eventAction === 'ShowMenu') {
-        $('body').removeClass('hidden');
-    } else if (eventAction === 'HideMenu') {
-        $('body').addClass('hidden');
-    }
-});
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (document.body.classList.contains('hidden')) return;
 
-// Internal functions
-function renderOptions() {
-    $options.slider.options.find('.option').remove();
-
-    currentOptions.forEach((option, index) => {
-        $options.slider.options.append(`<div class="option ${index == 0 ? "selected" : ""}" data-id="${sanitizeHTML(option.id)}">
-            <img src="${sanitizeHTML(option.image)}" alt="${sanitizeHTML(option.name)}" class="bg">
-            <p class="name">${sanitizeHTML(option.name)}</p>
-            <p class="votes">0</p>
-        </div>`);
-    });
-
-    // Setup pagination if needed
-    if (currentOptions.length > 6) {
-        $options.slider.wrapper.removeClass('disabled');
-        $options.slider.wrapper.find('.button.right').removeClass('disabled');
-
-        let pages = Math.ceil((currentOptions.length - 6) / 2);
-
-        $options.slider.pages.empty();
-        for (let i = 0; i < pages + 1; i++) {
-            $options.slider.pages.append(`<div class="page ${i == 0 ? "selected" : ""}"></div>`);
-        }
-    } else {
-        $options.slider.wrapper.addClass('disabled');
-        $options.slider.pages.empty();
-    }
-}
-
-function setSelectedOptionInfo(option) {
-    $selectedOptionInfo.name.text(sanitizeHTML(option.name));
-    $selectedOptionInfo.description.text(sanitizeHTML(option.description));
-
-    $selectedOptionInfo.infoList.empty();
-    if (option.info) {
-        option.info.forEach(info => {
-            $selectedOptionInfo.infoList.append(`<div>
-                <img src="${sanitizeHTML(info.icon)}" alt="${sanitizeHTML(info.name)}" class="icon">
-                <p class="name">${sanitizeHTML(info.name)}</p>
-                <p class="value">${sanitizeHTML(info.value)}</p>
-            </div>`);
+            if (e.key === 'ArrowLeft') this.prevPage();
+            if (e.key === 'ArrowRight') this.nextPage();
+            if (e.key === 'Enter') this.confirmSelection();
+            if (e.key === 'Escape') this.closeMenu();
         });
     }
-}
 
-function sendOptionSelected(optionId) {
-    if (typeof hEvent === 'function') {
-        hEvent('OnOptionSelected', { optionId: optionId });
-    }
-}
+    handleMessage(event) {
+        const data = event.data;
+        const action = data.name || data.action;
+        const args = data.args?.[0];
 
-// Event handlers
-// $(document).ready(function() {
-// Option click handler (delegated for dynamic content)
-$(document).on('click', '.options .option', function () {
-    $('.options .option').removeClass('selected');
-    $(this).addClass('selected');
+        const actions = {
+            'ShowMenu': () => this.showMenu(),
+            'HideMenu': () => this.hideMenu(),
+            'SetMenuTitle': () => this.setTitle(args?.title),
+            'SetPlayersCount': () => this.setPlayersCount(args?.count),
+            'ClearOptions': () => this.clearOptions(),
+            'AddOption': () => this.addOption(args),
+            'BuildMenu': () => this.renderMenu()
+        };
 
-    let optionId = $(this).data('id');
-    let option = currentOptions.find(opt => opt.id === optionId);
-    if (option) {
-        setSelectedOptionInfo(option);
-        sendOptionSelected(optionId);
-    }
-});
-
-// Page navigation click handler
-$(document).on('click', '.slider .slider-pages .page', function () {
-    let index = $(this).index();
-    actualPage = index;
-    let optionWidth = $options.slider.options.find('.option').outerWidth(true) + 20;
-    $options.slider.options.css('transform', `translateX(${-index * optionWidth * 2}px)`);
-
-    $options.slider.pages.find('.page').removeClass('selected');
-    $(this).addClass('selected');
-
-    $options.slider.button.removeClass('unable');
-    if (index == 0) {
-        $('.slider button.slide[data-side="left"]').addClass('unable');
-    } else if (index == $options.slider.pages.find('.page').length - 1) {
-        $('.slider button.slide[data-side="right"]').addClass('unable');
-    }
-});
-
-// Slider button handlers
-$('.slider button.slide').click(function (e) {
-    if ($(this).hasClass('unable')) return;
-
-    let optionWidth = $options.slider.options.find('.option').outerWidth(true) + 20;
-    let transform = $options.slider.options.css('transform');
-    let actualTranslate = transform === 'none' ? 0 : parseInt(transform.split(',')[4]);
-    let dataSide = $(this).attr('data-side');
-
-    if (dataSide == "left") {
-        actualPage--;
-        $options.slider.options.css('transform', `translateX(${actualTranslate + optionWidth * 2}px)`);
-    } else {
-        actualPage++;
-        $options.slider.options.css('transform', `translateX(${actualTranslate - optionWidth * 2}px)`);
-    }
-
-    $options.slider.pages.find('.page').removeClass('selected');
-    $options.slider.pages.find(`.page:nth-child(${actualPage + 1})`).addClass('selected');
-
-    $options.slider.button.removeClass('unable');
-    if (actualPage == 0) {
-        $('.slider button.slide[data-side="left"]').addClass('unable');
-    } else if (actualPage == $options.slider.pages.find('.page').length - 1) {
-        $('.slider button.slide[data-side="right"]').addClass('unable');
-    }
-});
-
-$(document).on('keydown', function (e) {
-    if (e.which === 8) {
-        e.preventDefault();
-        if (!$('body').hasClass('hidden')) {
-            if (typeof hEvent === 'function') {
-                hEvent('OnBackspace', {});
-            }
+        if (actions[action]) {
+            actions[action]();
         }
     }
-});
 
-$(document).ready(function () {
-    setTimeout(function() {
+    // === ACTIONS ===
+
+    showMenu() {
+        document.body.classList.remove('hidden');
+    }
+
+    hideMenu() {
+        document.body.classList.add('hidden');
+    }
+
+    closeMenu() {
+        this.sendEvent('OnReturn', {});
+        this.hideMenu();
+    }
+
+    setTitle(title) {
+        if (title) this.elements.headerTitle.textContent = title;
+    }
+
+    setPlayersCount(count) {
+        if (count) this.elements.headerCount.textContent = count;
+    }
+
+    clearOptions() {
+        this.state.options = [];
+        this.state.currentPage = 0;
+        this.state.selectedOptionId = null;
+        this.elements.optionsScroller.innerHTML = '';
+        this.elements.pagination.innerHTML = '';
+        this.updateDetails(null);
+    }
+
+    addOption(data) {
+        if (!data || !data.id) return;
+        // Check if exists
+        const exists = this.state.options.find(o => o.id === data.id);
+        if (!exists) {
+            this.state.options.push(data);
+        }
+    }
+
+    renderMenu() {
+        this.elements.optionsScroller.innerHTML = '';
+
+        this.state.options.forEach((option, index) => {
+            const el = document.createElement('div');
+            el.className = 'option';
+            el.dataset.id = option.id;
+            el.onclick = () => this.selectOption(option.id);
+
+            const inner = document.createElement('div');
+            inner.className = 'option-inner';
+
+            const img = document.createElement('img');
+            img.className = 'bg';
+            img.src = option.image || '';
+            img.alt = option.name;
+
+            const name = document.createElement('p');
+            name.className = 'name';
+            name.textContent = option.name;
+
+            inner.appendChild(img);
+            inner.appendChild(name);
+            el.appendChild(inner);
+
+            this.elements.optionsScroller.appendChild(el);
+        });
+
+        // Select first if available
+        if (this.state.options.length > 0) {
+            this.selectOption(this.state.options[0].id);
+        } else {
+            this.updateDetails(null);
+        }
+
+        this.updatePagination();
+    }
+
+    selectOption(id) {
+        this.state.selectedOptionId = id;
+
+        // Update UI selection
+        const allOptions = this.elements.optionsScroller.querySelectorAll('.option');
+        allOptions.forEach(el => {
+            if (el.dataset.id === id) el.classList.add('selected');
+            else el.classList.remove('selected');
+        });
+
+        // Update details
+        const option = this.state.options.find(o => o.id === id);
+        this.updateDetails(option);
+
+        this.sendEvent('OnOptionSelected', { optionId: id });
+    }
+
+    updateDetails(option) {
+        if (!option) {
+            this.elements.detailsName.textContent = 'Select an Option';
+            this.elements.detailsDesc.textContent = '';
+            this.elements.detailsStats.innerHTML = '';
+            return;
+        }
+
+        this.elements.detailsName.textContent = option.name;
+        this.elements.detailsDesc.textContent = option.description || '';
+
+        this.elements.detailsStats.innerHTML = '';
+        if (option.info && Array.isArray(option.info)) {
+            option.info.forEach(stat => {
+                const el = document.createElement('div');
+                el.className = 'stat-item';
+                el.innerHTML = `
+                    <span class="label">${stat.name}</span>
+                    <span class="value">${stat.value}</span>
+                `;
+                this.elements.detailsStats.appendChild(el);
+            });
+        }
+    }
+
+    confirmSelection() {
+        if (this.state.selectedOptionId) {
+            this.sendEvent('OnConfirm', { optionId: this.state.selectedOptionId });
+        }
+    }
+
+    // === SLIDER LOGIC ===
+
+    updatePagination() {
+        const totalPages = Math.ceil(this.state.options.length / this.state.itemsPerPage);
+        this.elements.pagination.innerHTML = '';
+
+        if (totalPages <= 1) {
+            this.elements.slideLeft.classList.add('disabled');
+            this.elements.slideRight.classList.add('disabled');
+            return;
+        }
+
+        // Create dots
+        for (let i = 0; i < totalPages; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === this.state.currentPage ? 'active' : ''}`;
+            this.elements.pagination.appendChild(dot);
+        }
+
+        // Update buttons
+        this.elements.slideLeft.classList.toggle('disabled', this.state.currentPage === 0);
+        this.elements.slideRight.classList.toggle('disabled', this.state.currentPage === totalPages - 1);
+    }
+
+    prevPage() {
+        if (this.state.currentPage > 0) {
+            this.state.currentPage--;
+            this.scrollToPage();
+        }
+    }
+
+    nextPage() {
+        const totalPages = Math.ceil(this.state.options.length / this.state.itemsPerPage);
+        if (this.state.currentPage < totalPages - 1) {
+            this.state.currentPage++;
+            this.scrollToPage();
+        }
+    }
+
+    scrollToPage() {
+        const translateValue = -(this.state.currentPage * 100); // 100% width shift
+        this.elements.optionsScroller.style.transform = `translateX(${translateValue}%)`;
+        this.updatePagination();
+    }
+
+    // === HELPERS ===
+
+    sendEvent(eventName, data) {
         if (typeof hEvent === 'function') {
-            hEvent('Ready', {});
+            hEvent(eventName, data);
+        } else {
+            console.log(`[Mock hEvent] ${eventName}`, data);
         }
-    }, 100);
-});
+    }
+}
+
+// Initialize
+const selectMenuSystem = new SelectMenuSystem();
