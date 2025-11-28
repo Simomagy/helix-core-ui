@@ -2,6 +2,25 @@ let pendingOptions = [];
 let currentOptions = [];
 let actualPage = 0;
 
+/**
+ * Sanitizes HTML input to prevent XSS attacks.
+ * Converts potentially dangerous characters to their HTML entity equivalents.
+ *
+ * @param {string} str - The string to sanitize
+ * @returns {string} The sanitized string safe for insertion into DOM
+ */
+function sanitizeHTML(str) {
+    if (str === null || str === undefined) {
+        return '';
+    }
+    str = String(str);
+
+    // Create a temporary element and use textContent to escape HTML
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // DOM References
 const $options = {
     header: {
@@ -54,7 +73,7 @@ window.addEventListener('message', (event) => {
     } else if (eventAction === 'SetMenuTitle') {
         const data = eventData.args && eventData.args[0];
         if (data && data.title) {
-            $options.header.title.text(data.title);
+            $options.header.title.text(sanitizeHTML(data.title));
         }
     } else if (eventAction === 'SetPlayersCount') {
         const data = eventData.args && eventData.args[0];
@@ -73,9 +92,9 @@ function renderOptions() {
     $options.slider.options.find('.option').remove();
 
     currentOptions.forEach((option, index) => {
-        $options.slider.options.append(`<div class="option ${index == 0 ? "selected" : ""}" data-id="${option.id}">
-            <img src="${option.image}" alt="${option.name}" class="bg">
-            <p class="name">${option.name}</p>
+        $options.slider.options.append(`<div class="option ${index == 0 ? "selected" : ""}" data-id="${sanitizeHTML(option.id)}">
+            <img src="${sanitizeHTML(option.image)}" alt="${sanitizeHTML(option.name)}" class="bg">
+            <p class="name">${sanitizeHTML(option.name)}</p>
             <p class="votes">0</p>
         </div>`);
     });
@@ -98,16 +117,16 @@ function renderOptions() {
 }
 
 function setSelectedOptionInfo(option) {
-    $selectedOptionInfo.name.text(option.name);
-    $selectedOptionInfo.description.text(option.description);
+    $selectedOptionInfo.name.text(sanitizeHTML(option.name));
+    $selectedOptionInfo.description.text(sanitizeHTML(option.description));
 
     $selectedOptionInfo.infoList.empty();
     if (option.info) {
         option.info.forEach(info => {
             $selectedOptionInfo.infoList.append(`<div>
-                <img src="${info.icon}" alt="${info.name}" class="icon">
-                <p class="name">${info.name}</p>
-                <p class="value">${info.value}</p>
+                <img src="${sanitizeHTML(info.icon)}" alt="${sanitizeHTML(info.name)}" class="icon">
+                <p class="name">${sanitizeHTML(info.name)}</p>
+                <p class="value">${sanitizeHTML(info.value)}</p>
             </div>`);
         });
     }

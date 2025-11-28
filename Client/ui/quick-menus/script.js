@@ -1,3 +1,22 @@
+/**
+ * Sanitizes HTML input to prevent XSS attacks.
+ * Converts potentially dangerous characters to their HTML entity equivalents.
+ *
+ * @param {string} str - The string to sanitize
+ * @returns {string} The sanitized string safe for insertion into DOM
+ */
+function sanitizeHTML(str) {
+    if (str === null || str === undefined) {
+        return '';
+    }
+    str = String(str);
+
+    // Create a temporary element and use textContent to escape HTML
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 window.addEventListener('message', (event) => {
     const eventData = event.data;
     const eventAction = eventData.name || eventData.action;
@@ -5,8 +24,8 @@ window.addEventListener('message', (event) => {
     if (eventAction === 'ShowInputMenu') {
         const data = eventData.args && eventData.args[0];
         if (data) {
-            $('.input-menu .header .title').text(data.title);
-            $('.input-menu input').attr('placeholder', data.placeholder);
+            $('.input-menu .header .title').text(sanitizeHTML(data.title));
+            $('.input-menu input').attr('placeholder', sanitizeHTML(data.placeholder));
             $('.input-menu input').val('');
             $('body').addClass('in-input-menu');
 
@@ -26,8 +45,8 @@ window.addEventListener('message', (event) => {
     } else if (eventAction === 'ShowConfirmMenu') {
         const data = eventData.args && eventData.args[0];
         if (data) {
-            $('.confirm-menu .header .title').text(data.title);
-            $('.confirm-menu .message').text(data.message);
+            $('.confirm-menu .header .title').text(sanitizeHTML(data.title));
+            $('.confirm-menu .message').text(sanitizeHTML(data.message));
             $('body').addClass('in-confirm-menu');
         }
     } else if (eventAction === 'HideConfirmMenu') {
