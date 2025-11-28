@@ -8,7 +8,8 @@ class SelectMenuSystem {
             options: [],
             currentPage: 0,
             itemsPerPage: 3,
-            selectedOptionId: null
+            selectedOptionId: null,
+            isOpen: false
         };
 
         this.elements = {
@@ -67,6 +68,8 @@ class SelectMenuSystem {
         const action = data.name || data.action;
         const args = data.args?.[0];
 
+        console.log('[SelectMenu] Received message:', action, args);
+
         const actions = {
             'ShowMenu': () => this.showMenu(),
             'HideMenu': () => this.hideMenu(),
@@ -79,17 +82,31 @@ class SelectMenuSystem {
 
         if (actions[action]) {
             actions[action]();
+        } else {
+            console.warn('[SelectMenu] Unknown action:', action);
         }
     }
 
     // === ACTIONS ===
 
     showMenu() {
+        if (this.state.isOpen) return;
         document.body.classList.remove('hidden');
+        this.state.isOpen = true;
+        this.state.lastShowTime = Date.now();
     }
 
     hideMenu() {
+        if (!this.state.isOpen) return;
+
+        // Ignore HideMenu if received too quickly after ShowMenu (debounce/fix for game logic)
+        if (Date.now() - (this.state.lastShowTime || 0) < 200) {
+            console.warn('[SelectMenu] Ignoring rapid HideMenu command');
+            return;
+        }
+
         document.body.classList.add('hidden');
+        this.state.isOpen = false;
     }
 
     closeMenu() {
