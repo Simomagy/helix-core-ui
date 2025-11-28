@@ -57,7 +57,6 @@ body {
     flex-direction: column;
     z-index: 1000;
     animation: menuFadeIn 0.2s ease-out;
-    gap: 8px;
     outline: none;
 }
 
@@ -95,7 +94,7 @@ body {
     gap: 8px;
     background: #eeeeee;
     clip-path: var(--clip-br-sm);
-    border-radius: 4px;
+    border-radius: 4px 4px 0 0;
 }
 
 .context-menu .header .logo {
@@ -130,6 +129,8 @@ body {
     display: flex;
     flex-direction: column;
     outline: none;
+    background-color: #1a1a1a;
+    border-radius: 4px 4px 0 0;
 }
 
 .context-menu .options-qty {
@@ -157,12 +158,14 @@ body {
 /* === INFO SECTION === */
 .context-menu .info {
     padding: 12px 16px;
-    background: #1a1a1a;
+    background: #ffffff;
     display: none;
-    clip-path: var(--clip-br-sm);
     display: flex;
     flex-direction: column;
-    border-radius: 4px;
+    border-radius: 0 0 4px 4px;
+    width: calc(100% - 12px);
+    position: relative;
+    clip-path: var(--clip-br-sm);
 }
 
 .context-menu .info .head {
@@ -176,20 +179,23 @@ body {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
-    color: var(--primary);
+}
+
+.context-menu .info .head svg path {
+    fill: #111111;
 }
 
 .context-menu .info .head p {
     font-size: 10px;
     font-weight: 700;
-    color: var(--primary);
+    color: #000000;
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
 
 .context-menu .info .description {
     font-size: 12px;
-    color: #999999;
+    color: #111111;
     line-height: 1.6;
     padding-left: 22px;
 }
@@ -199,7 +205,7 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: visible;
-    padding: 8px 12px 12px 12px;
+    padding: 14px;
     outline: none;
 }
 
