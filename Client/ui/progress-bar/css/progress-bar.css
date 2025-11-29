@@ -1,0 +1,237 @@
+/**
+ * HELIX Progress Bar System
+ * Modern UI for progress indicators
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+    --primary: #ffffff;
+    --bg-dark: rgba(17, 17, 17, 0.9);
+    --clip-br-sm: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Tomorrow', sans-serif;
+}
+
+body {
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* === CONTAINERS === */
+.pb-container {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.pb-container.center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+}
+
+/* Top Positions */
+.pb-container.top-left {
+    top: 40px;
+    left: 40px;
+    align-items: flex-start;
+}
+
+.pb-container.top-center {
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+}
+
+.pb-container.top-right {
+    top: 40px;
+    right: 40px;
+    align-items: flex-end;
+}
+
+/* Center Positions (Vertical Center) */
+.pb-container.center-left {
+    top: 50%;
+    left: 40px;
+    transform: translateY(-50%);
+    align-items: flex-start;
+}
+
+.pb-container.center-right {
+    top: 50%;
+    right: 40px;
+    transform: translateY(-50%);
+    align-items: flex-end;
+}
+
+/* Bottom Positions */
+.pb-container.bottom-left {
+    bottom: 40px;
+    left: 40px;
+    align-items: flex-start;
+}
+
+.pb-container.bottom-center {
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+}
+
+.pb-container.bottom-right {
+    bottom: 40px;
+    right: 40px;
+    align-items: flex-end;
+}
+
+/* === BASE ITEM === */
+.progress-bar {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-bar.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* === HELIX STYLE (Revised) === */
+.helix-style {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Reset padding */
+    background: transparent;
+    clip-path: none;
+    border: none;
+}
+
+.helix-style .pb-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.helix-style .pb-border {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: visible; /* Allow stroke to be fully visible */
+}
+
+.helix-style .pb-path {
+    transition: stroke-dasharray 0.1s linear;
+    vector-effect: non-scaling-stroke;
+}
+
+.helix-style .pb-container-inner {
+    position: relative;
+    padding: 10px 20px;
+    background: var(--bg-dark);
+    clip-path: var(--clip-br-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0;
+    min-width: 120px;
+    margin: 2px; /* Inset from SVG border */
+}
+
+.helix-style .pb-label-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.helix-style .pb-text {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.helix-style .pb-percentage {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10px;
+    font-weight: 400;
+}
+
+/* === HORIZONTAL STYLE === */
+.horizontal-style {
+    width: 300px;
+    background: var(--bg-dark);
+    padding: 12px;
+    clip-path: var(--clip-br-sm);
+    border-left: 2px solid var(--primary);
+}
+
+.horizontal-style .pb-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.horizontal-style .pb-text {
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.horizontal-style .pb-percentage {
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.horizontal-style .pb-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.horizontal-style .pb-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* === ANIMATIONS === */
+.progress-bar.completed {
+    animation: pulse-success 0.5s ease-in-out;
+}
+
+@keyframes pulse-success {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/progress-bar.css">
+</head>
+<body>
+    <!-- Containers for different positions -->
+    <div id="pb-container-center" class="pb-container center"></div>
+    <div id="pb-container-top-left" class="pb-container top-left"></div>
+    <div id="pb-container-top-center" class="pb-container top-center"></div>
+    <div id="pb-container-top-right" class="pb-container top-right"></div>
+    <div id="pb-container-center-left" class="pb-container center-left"></div>
+    <div id="pb-container-center-right" class="pb-container center-right"></div>
+    <div id="pb-container-bottom-left" class="pb-container bottom-left"></div>
+    <div id="pb-container-bottom-center" class="pb-container bottom-center"></div>
+    <div id="pb-container-bottom-right" class="pb-container bottom-right"></div>
+
+    <!-- Templates -->
+
+    <!-- Helix Style Template -->
+    <div id="template-helix" class="progress-bar helix-style" style="display: none;">
+        <div class="pb-wrapper">
+            <svg class="pb-border" viewBox="0 0 56 52" xmlns="http://www.w3.org/2000/svg">
+                <path class="pb-path"
+                    d="M 2 2 L 54 2 L 54 42 L 42 50 L 2 50 Z"
+                    fill="none"
+                    stroke="var(--primary)"
+                    stroke-width="2"
+                    stroke-dasharray="0 1000"
+                    pathLength="1000"/>
+            </svg>
+            <div class="pb-container-inner">
+                <div class="pb-label-container">
+                    <span class="pb-text">PROCESSING</span>
+                    <span class="pb-percentage">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Horizontal Style Template -->
+    <div id="template-horizontal" class="progress-bar horizontal-style" style="display: none;">
+        <div class="pb-label-row">
+            <span class="pb-text">PROCESSING</span>
+            <span class="pb-percentage">0%</span>
+        </div>
+        <div class="pb-track">
+            <div class="pb-fill"></div>
+        </div>
+    </div>
+
+    <script src="js/progress-bar.js"></script>
+</body>
+</html>

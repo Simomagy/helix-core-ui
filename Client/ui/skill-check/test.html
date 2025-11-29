@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Check Test</title>
+    <link rel="stylesheet" href="css/skill-check.css">
+    <style>
+        body {
+            background-color: #333;
+        }
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            color: white;
+            font-family: sans-serif;
+        }
+        button {
+            display: block;
+            margin: 5px 0;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="test-controls">
+        <h3>Skill Check Tests</h3>
+        <button onclick="addSkillCheck(1)">Easy (Dif 1)</button>
+        <button onclick="addSkillCheck(3)">Medium (Dif 3)</button>
+        <button onclick="addSkillCheck(5)">Hard (Dif 5)</button>
+        <button onclick="simulatePress()">Simulate Key Press (SPACE)</button>
+        <button onclick="clearAll()">Clear All</button>
+    </div>
+
+    <div id="sc-container"></div>
+
+    <div id="template-skill-check" class="skill-check" style="display: none;">
+        <div class="sc-content">
+            <div class="sc-track-container">
+                <div class="sc-track-bg"></div>
+                <div class="sc-zone"></div>
+                <div class="sc-cursor"></div>
+            </div>
+            <div class="sc-info">
+                <div class="sc-key-display">
+                    <span class="key-name">E</span>
+                </div>
+                <div class="sc-retries"></div>
+            </div>
+        </div>
+        <div class="sc-feedback">SUCCESS</div>
+    </div>
+
+    <script src="js/skill-check.js"></script>
+    <script>
+        let checkId = 0;
+        let currentId = null;
+
+        function addSkillCheck(difficulty) {
+            checkId++;
+            currentId = checkId;
+
+            window.postMessage({
+                name: 'AddSkillCheck',
+                args: [{
+                    id: checkId,
+                    key: 'E',
+                    difficulty: difficulty,
+                    retries: 3,
+                    zoneSize: 20
+                }]
+            });
+        }
+
+        function simulatePress() {
+            if(currentId) {
+                window.postMessage({
+                    name: 'CheckKeyPress',
+                    args: [{ id: currentId }]
+                });
+            }
+        }
+
+        function clearAll() {
+            window.postMessage({ name: 'ClearAll' });
+        }
+
+        // Key binding for testing convenience
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.key === 'e') {
+                simulatePress();
+            }
+        });
+
+        window.hEvent = function(name, data) {
+            console.log("Lua Event:", name, data);
+            if (name === 'SkillCheckSuccess' || name === 'SkillCheckFail') {
+                setTimeout(() => {
+                    window.postMessage({
+                        name: 'RemoveSkillCheck',
+                        args: [{ id: data.id }]
+                    });
+                }, 500);
+            }
+        }
+    </script>
+</body>
+</html>

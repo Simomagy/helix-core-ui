@@ -200,12 +200,78 @@ local quickInput_trigger = Trigger(
     Color(1, 0, 0, 0.5)
 )
 
-local clearInteraction_trigger = Trigger( -- clear all interactions trigger
-    Vector(-280.0, 960.0, 100),
+function Showcase:ShowProgressBar(style)
+    ProgressBar.Create("demo-bar", {
+        text = "Calibrating...",
+        duration = 5000,
+        position = "bottom-center",
+        style = style,
+        onComplete = function()
+            Notification.Success("Progress", "Calibration Complete")
+        end
+    })
+end
+
+function Showcase:StartSkillCheck(difficulty)
+    SkillCheck.Create("demo-check", {
+        key = "E",
+        difficulty = difficulty,
+        retries = 3,
+        onSuccess = function()
+            Notification.Success("Skill Check", "Hack Successful")
+        end,
+        onFail = function()
+            Notification.Error("Skill Check", "Hack Failed")
+        end
+    })
+end
+
+local pb_trigger_style_helix = Trigger(
+    Vector(-681.479701, 935.06544, 91.649999),
     Rotator(),
     Vector(100),
     TriggerType.Sphere,
     true,
-    function(self, other) Showcase:ClearAllInteractions() end,
-    Color(0, 1, 0, 0.5)
+    function(self, other) Showcase:ShowProgressBar("helix") end,
+    Color(0, 0, 1, 0.5)
+)
+
+local pb_trigger_style_horizontal = Trigger(
+    Vector(-921.553119, 940.399655, 91.649999),
+    Rotator(),
+    Vector(100),
+    TriggerType.Sphere,
+    true,
+    function(self, other) Showcase:ShowProgressBar("horizontal") end,
+    Color(0, 0, 1, 0.5)
+)
+
+local sc_trigger_easy = Trigger(
+    Vector(-1255.812497, 960.553291, 91.65),
+    Rotator(),
+    Vector(100),
+    TriggerType.Sphere,
+    true,
+    function(self, other) Showcase:StartSkillCheck(1) end,
+    Color(1, 1, 0, 0.5)
+)
+
+local sc_trigger_medium = Trigger(
+    Vector(-1539.652336, 980.752641, 91.65),
+    Rotator(),
+    Vector(100),
+    TriggerType.Sphere,
+    true,
+    function(self, other) Showcase:StartSkillCheck(2) end,
+    Color(1, 1, 0, 0.5)
+)
+
+local sc_trigger_hard = Trigger(
+    Vector(-1785.270581, 980.752641, 91.65),
+    Rotator(),
+    Vector(100),
+    TriggerType.Sphere,
+    true,
+    function(self, other) Showcase:StartSkillCheck(3) end,
+    Color(1, 1, 0, 0.5)
 )

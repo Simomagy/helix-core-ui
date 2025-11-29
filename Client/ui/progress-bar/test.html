@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Bar Test</title>
+    <link rel="stylesheet" href="css/progress-bar.css">
+    <style>
+        body {
+            background-color: #333; /* Dark background for visibility */
+        }
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            color: white;
+            font-family: sans-serif;
+            border: 1px solid #444;
+        }
+        .style-selector {
+            margin-bottom: 15px;
+        }
+        select {
+            padding: 5px;
+            border-radius: 4px;
+            background: #222;
+            color: white;
+            border: 1px solid #555;
+        }
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .grid-row {
+            display: flex;
+            gap: 5px;
+        }
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 40px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="test-controls">
+        <h3>Progress Bar Tests</h3>
+        <div class="row">
+            <button onclick="addBar('helix', 'center')">Helix Center</button>
+            <button onclick="addBar('horizontal', 'bottom-center')">Horiz B-Center</button>
+        </div>
+        <div class="row">
+            <button onclick="addBar('helix', 'top-left')">Top Left</button>
+            <button onclick="addBar('helix', 'top-center')">Top Center</button>
+            <button onclick="addBar('helix', 'top-right')">Top Right</button>
+        </div>
+        <div class="row">
+            <button onclick="addBar('helix', 'center-left')">Center Left</button>
+            <button onclick="addBar('helix', 'center-right')">Center Right</button>
+        </div>
+        <div class="row">
+            <button onclick="addBar('helix', 'bottom-left')">Bot Left</button>
+            <button onclick="addBar('helix', 'bottom-center')">Bot Center</button>
+            <button onclick="addBar('helix', 'bottom-right')">Bot Right</button>
+        </div>
+        <button onclick="clearAll()">Clear All</button>
+    </div>
+
+    <!-- Include the actual UI structure -->
+    <div id="pb-container-center" class="pb-container center"></div>
+    <div id="pb-container-top-left" class="pb-container top-left"></div>
+    <div id="pb-container-top-center" class="pb-container top-center"></div>
+    <div id="pb-container-top-right" class="pb-container top-right"></div>
+    <div id="pb-container-center-left" class="pb-container center-left"></div>
+    <div id="pb-container-center-right" class="pb-container center-right"></div>
+    <div id="pb-container-bottom-left" class="pb-container bottom-left"></div>
+    <div id="pb-container-bottom-center" class="pb-container bottom-center"></div>
+    <div id="pb-container-bottom-right" class="pb-container bottom-right"></div>
+
+    <!-- Helix Style Template -->
+    <div id="template-helix" class="progress-bar helix-style" style="display: none;">
+        <div class="pb-wrapper">
+            <svg class="pb-border" viewBox="0 0 56 52" xmlns="http://www.w3.org/2000/svg">
+                <path class="pb-path"
+                    d="M 2 2 L 54 2 L 54 42 L 42 50 L 2 50 Z"
+                    fill="none"
+                    stroke="var(--primary)"
+                    stroke-width="2"
+                    stroke-dasharray="0 1000"
+                    pathLength="1000"/>
+            </svg>
+            <div class="pb-container-inner">
+                <div class="pb-label-container">
+                    <span class="pb-text">PROCESSING</span>
+                    <span class="pb-percentage">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="template-horizontal" class="progress-bar horizontal-style" style="display: none;">
+        <div class="pb-label-row">
+            <span class="pb-text">PROCESSING</span>
+            <span class="pb-percentage">0%</span>
+        </div>
+        <div class="pb-track">
+            <div class="pb-fill"></div>
+        </div>
+    </div>
+
+    <script src="js/progress-bar.js"></script>
+    <script>
+        // Test Logic
+        let barId = 0;
+
+        function addBarAt(position) {
+            const style = document.getElementById('style-select').value;
+            addBar(style, position);
+        }
+
+        function addBar(style, position) {
+            barId++;
+            const id = barId;
+
+            window.postMessage({
+                name: 'AddProgressBar',
+                args: [{
+                    id: id,
+                    text: 'Test ' + id,
+                    duration: 3000,
+                    style: style,
+                    position: position
+                }]
+            });
+
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 1;
+                window.postMessage({
+                    name: 'UpdateProgress',
+                    args: [{ id: id, progress: progress }]
+                });
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    window.postMessage({
+                        name: 'CompleteProgressBar',
+                        args: [{ id: id }]
+                    });
+                    setTimeout(() => {
+                        window.postMessage({
+                            name: 'RemoveProgressBar',
+                            args: [{ id: id }]
+                        });
+                    }, 1000);
+                }
+            }, 30);
+        }
+
+        function clearAll() {
+            window.postMessage({ name: 'ClearAll' });
+        }
+
+        // Mock hEvent
+        window.hEvent = function(name, data) {
+            console.log("Lua Event:", name, data);
+        }
+    </script>
+</body>
+</html>

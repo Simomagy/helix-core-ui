@@ -7,6 +7,8 @@
         "Client/interaction.lua",
         "Client/notifications.lua",
         "Client/select-menu.lua",
-        "Client/quick-menus.lua"
+        "Client/quick-menus.lua",
+        "Client/progress-bar.lua",
+        "Client/skill-check.lua"
     ]
 }

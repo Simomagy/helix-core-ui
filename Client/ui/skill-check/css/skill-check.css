@@ -1,0 +1,181 @@
+/**
+ * HELIX Skill Check System
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+    --primary: #ffffff;
+    --bg-dark: rgba(17, 17, 17, 0.95);
+    --success: #4ade80;
+    --fail: #ef4444;
+    --clip-br-sm: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Tomorrow', sans-serif;
+}
+
+body {
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+#sc-container {
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.skill-check {
+    background: var(--bg-dark);
+    padding: 15px 20px;
+    clip-path: var(--clip-br-sm);
+    border-left: 2px solid var(--primary);
+    width: 350px;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    position: relative;
+}
+
+.skill-check.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.skill-check.shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    border-color: var(--fail);
+}
+
+.skill-check.success {
+    border-color: var(--success);
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.sc-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sc-track-container {
+    position: relative;
+    height: 16px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.sc-track-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    /* background grid pattern optional */
+}
+
+.sc-zone {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: rgba(74, 222, 128, 0.4);
+    border-left: 2px solid var(--success);
+    border-right: 2px solid var(--success);
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+    z-index: 1;
+}
+
+.sc-cursor {
+    position: absolute;
+    top: -2px;
+    width: 4px;
+    height: 20px;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+    z-index: 2;
+    transform: translateX(-50%);
+}
+
+.sc-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sc-key-display {
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    clip-path: var(--clip-br-sm);
+}
+
+.sc-retries {
+    display: flex;
+    gap: 4px;
+}
+
+.sc-retry-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: background 0.3s;
+}
+
+.sc-retry-dot.active {
+    background: var(--fail);
+    box-shadow: 0 0 5px var(--fail);
+}
+
+.sc-feedback {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    background: rgba(17, 17, 17, 0.8);
+    color: var(--success);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.skill-check.success .sc-feedback {
+    color: var(--success);
+    opacity: 1;
+}
+
+.skill-check.shake .sc-feedback {
+    color: var(--fail);
+    content: 'FAILED';
+    opacity: 1;
+}
+
