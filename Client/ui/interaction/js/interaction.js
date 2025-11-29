@@ -133,16 +133,17 @@ class InteractionSystem {
         element.style.visibility = 'visible';
 
         // Store reference
-        this.interactions.set(data.id, {
+        const interactionData = {
             element: element,
             duration: data.duration || 0
-        });
+        };
+        this.interactions.set(data.id, interactionData);
 
         // Show container
         this.showContainer();
 
         // Trigger show animation
-        setTimeout(() => {
+        interactionData.showTimeout = setTimeout(() => {
             element.classList.add('show');
         }, 50);
     }
@@ -156,13 +157,20 @@ class InteractionSystem {
         const interaction = this.interactions.get(data.id);
         if (!interaction) return;
 
+        // Clear show timeout if exists
+        if (interaction.showTimeout) {
+            clearTimeout(interaction.showTimeout);
+        }
+
+        // Remove from map immediately to prevent race conditions
+        this.interactions.delete(data.id);
+
         // Hide animation
         interaction.element.classList.remove('show');
 
         // Remove after animation
         setTimeout(() => {
             interaction.element.remove();
-            this.interactions.delete(data.id);
             this.checkVisibility();
         }, 300);
     }
@@ -237,15 +245,6 @@ class InteractionSystem {
         if (typeof hEvent === 'function') {
             hEvent(eventName, data);
         }
-    }
-
-    /**
-     * Sanitize HTML to prevent XSS
-     */
-    sanitizeHTML(str) {
-        const temp = document.createElement('div');
-        temp.textContent = str;
-        return temp.innerHTML;
     }
 }
 

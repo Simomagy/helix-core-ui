@@ -75,6 +75,11 @@ function Showcase:CreateDoorInteraction()
     })
 end
 
+function Showcase:ClearAllInteractions()
+    Interaction.Clear()
+    Notification.Info("Interactions", "All interactions cleared")
+end
+
 function Showcase:ConfirmQuit()
     local qm = QuickMenus.new()
     qm:ShowConfirm("Quit Game?", "Are you sure you want to quit?",
@@ -193,4 +198,14 @@ local quickInput_trigger = Trigger(
     true,
     function(self, other) Showcase:QuickInput() end,
     Color(1, 0, 0, 0.5)
+)
+
+local clearInteraction_trigger = Trigger( -- clear all interactions trigger
+    Vector(-280.0, 960.0, 100),
+    Rotator(),
+    Vector(100),
+    TriggerType.Sphere,
+    true,
+    function(self, other) Showcase:ClearAllInteractions() end,
+    Color(0, 1, 0, 0.5)
 )
