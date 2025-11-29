@@ -60,7 +60,6 @@ body:not(.hidden) .configurable-menu {
 .options-selector {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 /* HEADER */
@@ -72,7 +71,8 @@ body:not(.hidden) .configurable-menu {
     justify-content: space-between;
     align-items: center;
     width: fit-content;
-    min-width: 300px;
+    min-width: 350px;
+    border-radius: 4px 4px 0 0;
 }
 
 .options-selector header h1 {
@@ -107,6 +107,7 @@ body:not(.hidden) .configurable-menu {
     align-items: center;
     gap: 12px;
     height: 260px;
+    border-radius: 0 4px 4px 4px;
 }
 
 .slide-btn {
@@ -122,6 +123,7 @@ body:not(.hidden) .configurable-menu {
     clip-path: var(--clip-br-sm);
     transition: all 0.2s ease;
     padding: 0; /* Remove padding to maximize icon space */
+    border-radius: 4px;
 }
 
 .slide-btn:hover:not(.disabled) {
@@ -166,6 +168,7 @@ body:not(.hidden) .configurable-menu {
     transition: all 0.2s ease;
     overflow: hidden;
     position: relative;
+    border-radius: 4px;
 }
 
 .option:hover .option-inner {
@@ -238,6 +241,7 @@ body:not(.hidden) .configurable-menu {
     flex-direction: column;
     gap: 12px;
     overflow-y: auto;
+    border-radius: 4px;
 }
 
 .info-col h2 {
@@ -276,6 +280,7 @@ body:not(.hidden) .configurable-menu {
     clip-path: var(--clip-br-sm);
     padding: 20px;
     overflow-y: auto;
+    border-radius: 4px;
 }
 
 .option-description {
@@ -305,6 +310,7 @@ body:not(.hidden) .configurable-menu {
     display: flex;
     align-items: center;
     gap: 8px;
+    border-radius: 4px;
 }
 
 .action-btn.primary {

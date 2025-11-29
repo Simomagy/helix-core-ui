@@ -132,6 +132,8 @@ body {
     min-height: 0;
     flex: 1;
     padding: 12px;
+    clip-path: var(--clip-br);
+    border-top-right-radius: 4px;
 }
 
 .context-menu .options-qty {

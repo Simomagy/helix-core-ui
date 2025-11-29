@@ -59,6 +59,7 @@ body {
     transform: translateX(50px);
     transition: all 0.3s ease;
     pointer-events: auto;
+    border-radius: 4px;
 }
 
 .notification.show {
