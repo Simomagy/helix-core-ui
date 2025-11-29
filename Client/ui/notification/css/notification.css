@@ -27,15 +27,39 @@ body {
 /* Container for all notifications */
 #notification-container {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
+    z-index: 20000; /* Increased z-index to be above everything */
     display: flex;
     flex-direction: column;
     gap: 10px;
     pointer-events: none;
     opacity: 1;
     transition: opacity 0.3s ease;
+}
+
+#notification-container.top-right {
+    top: 20px;
+    right: 20px;
+    align-items: flex-end;
+}
+
+#notification-container.top-left {
+    top: 20px;
+    left: 20px;
+    align-items: flex-start;
+}
+
+#notification-container.bottom-right {
+    bottom: 20px;
+    right: 20px;
+    align-items: flex-end;
+    flex-direction: column-reverse; /* Newest at bottom */
+}
+
+#notification-container.bottom-left {
+    bottom: 20px;
+    left: 20px;
+    align-items: flex-start;
+    flex-direction: column-reverse; /* Newest at bottom */
 }
 
 #notification-container.hidden {

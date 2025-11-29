@@ -140,14 +140,40 @@ function Showcase:QuickInput()
     )
 end
 
-local context_trigger = Trigger(
-    Vector(1270.0, -200.0, 100),
+function Showcase:ShowSideMenu()
+    local sideMenu = SideMenu.new()
+
+    sideMenu:SetHeader("SIDE MENU")
+    sideMenu:setMenuInfo("Navigation", "Standard side menu navigation")
+
+    sideMenu:addButton("dashboard", "Dashboard", function()
+        Notification.Info("Menu", "Dashboard selected", 3000, "top-left")
+    end)
+
+    sideMenu:addButton("inventory", "Inventory", function()
+        Notification.Info("Menu", "Inventory selected", 3000, "top-left")
+    end)
+
+    sideMenu:addDropdown("settings", "Settings", {
+        { type = "checkbox", id = "notifications", label = "Notifications", checked = true },
+        { type = "range", id = "volume", label = "Volume", min = 0, max = 100, value = 50 }
+    })
+
+    sideMenu:addButton("close", "Close Menu", function()
+        sideMenu:Close()
+    end)
+
+    sideMenu:Open(true, true)
+end
+
+local menu_trigger = Trigger(
+    Vector(-2226.367706, 958.801098, 91.702491),
     Rotator(),
     Vector(100),
     TriggerType.Sphere,
     true,
-    function(self, other) Showcase:ShowSettingsMenu() end,
-    Color(1, 0, 0, 0.5)
+    function(self, other) Showcase:ShowSideMenu() end,
+    Color(0.5, 0, 0.5, 0.5)
 )
 
 local select_trigger = Trigger( -- select trigger

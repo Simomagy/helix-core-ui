@@ -9,6 +9,7 @@
         "Client/select-menu.lua",
         "Client/quick-menus.lua",
         "Client/progress-bar.lua",
-        "Client/skill-check.lua"
+        "Client/skill-check.lua",
+        "Client/side-menu.lua"
     ]
 }

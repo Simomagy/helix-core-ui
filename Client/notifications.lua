@@ -47,10 +47,10 @@ function Notification.CheckVisibility()
     end
 end
 
-function Notification.Send(type, title, message, duration)
+function Notification.Send(type, title, message, duration, position)
     if not Notification.UIReady then
         Timer.SetTimeout(function()
-            Notification.Send(type, title, message, duration)
+            Notification.Send(type, title, message, duration, position)
         end, 100)
         return
     end
@@ -68,7 +68,8 @@ function Notification.Send(type, title, message, duration)
         type = type,
         title = title,
         message = message,
-        duration = duration
+        duration = duration,
+        position = position or "top-right"
     })
     Notification.activeNotifications[id] = true
     Notification.Show()
@@ -112,20 +113,20 @@ function Notification.Destroy()
     end
 end
 
-function Notification.Success(title, message, duration)
-    return Notification.Send("success", title, message, duration)
+function Notification.Success(title, message, duration, position)
+    return Notification.Send("success", title, message, duration, position)
 end
 
-function Notification.Error(title, message, duration)
-    return Notification.Send("error", title, message, duration)
+function Notification.Error(title, message, duration, position)
+    return Notification.Send("error", title, message, duration, position)
 end
 
-function Notification.Warning(title, message, duration)
-    return Notification.Send("warning", title, message, duration)
+function Notification.Warning(title, message, duration, position)
+    return Notification.Send("warning", title, message, duration, position)
 end
 
-function Notification.Info(title, message, duration)
-    return Notification.Send("info", title, message, duration)
+function Notification.Info(title, message, duration, position)
+    return Notification.Send("info", title, message, duration, position)
 end
 
 _G.Notification = Notification

@@ -34,7 +34,7 @@ class NotificationSystem {
 
         switch (eventAction) {
             case 'AddNotification':
-                if (data) this.add(data.id, data.type, data.title, data.message, data.duration);
+                if (data) this.add(data.id, data.type, data.title, data.message, data.duration, data.position);
                 break;
             case 'RemoveNotification':
                 if (data && data.id) this.remove(data.id);
@@ -57,7 +57,11 @@ class NotificationSystem {
         this.containerVisible = false;
     }
 
-    add(id, type, title, message, duration) {
+    add(id, type, title, message, duration, position = "top-right") {
+        // Set position class on container
+        this.container.className = ''; // Clear previous classes
+        this.container.classList.add(position);
+
         // Clone template
         const element = this.template.cloneNode(true);
         element.id = `notification-${id}`;
@@ -71,8 +75,18 @@ class NotificationSystem {
         element.querySelector('.notification-title').textContent = title;
         element.querySelector('.notification-message').textContent = message;
 
-        // Prepend to container
-        this.container.insertBefore(element, this.container.firstChild);
+        // Add to container (prepend or append based on position?)
+        // For top positions, prepend (newest on top)
+        // For bottom positions, append (newest on bottom) might be better, but let's stick to one direction for consistency or adapt.
+        // Actually, usually notifications stack. top-right: stack downwards. bottom-right: stack upwards?
+        // Let's keep simple: prepend always puts new on top of list.
+        // CSS flex-direction: column-reverse for bottom?
+
+        if (position.includes('bottom')) {
+             this.container.appendChild(element);
+        } else {
+             this.container.insertBefore(element, this.container.firstChild);
+        }
 
         // Store notification data
         this.notifications[id] = {
